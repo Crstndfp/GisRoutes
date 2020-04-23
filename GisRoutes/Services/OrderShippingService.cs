@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using GisRoutes.Models;
 using Microsoft.AspNetCore.Mvc;
+using GisRoutes.RestFull;
+using GisRoutes.Dto;
+using Newtonsoft.Json.Linq;
 
 namespace GisRoutes.Services
 {
@@ -17,7 +20,7 @@ namespace GisRoutes.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Object>> GetOrderShipping(DateTime thisDay)
+        public async Task<IEnumerable<Shipping>> GetOrderShipping(DateTime thisDay)
         {
 
             var query = from envio in _context.TblEnvio
@@ -30,7 +33,7 @@ namespace GisRoutes.Services
                             on envio.IdEvento equals evento.IdEvento into ev
                             from subEnvento in ev.DefaultIfEmpty()
                         where DateTime.Compare(thisDay.AddDays(-1).Date, envio.Fecha.Date) == 0
-                        select new
+                        select new Shipping
                         {
                             NoRegistro = envio.IdEnvio,
                             CodigoAgente = (envio.Comprador.Substring(0, 7).Contains("Retirar"))
@@ -70,7 +73,22 @@ namespace GisRoutes.Services
                             Notas = subEnvento.Referencias
                         };
 
-            return await query.ToListAsync();
+            IEnumerable<Shipping> listShippng = await query.ToListAsync();
+
+            ClientGisRoutes clientGisRoutes = new ClientGisRoutes();
+
+            foreach (Shipping s in listShippng)
+            {
+                if ( s.Latitude.Equals(0) && s.Longitude.Equals(0))
+                {
+                    JObject rest = clientGisRoutes.getGeolocationByAddress( 
+                        s.Direccion.Length >= 200 ? s.Direccion.Substring(0,199) : s.Direccion );
+                    s.Latitude = (rest == null) ? s.Latitude : (double)rest["candidates"][0]["location"]["y"];
+                    s.Longitude = rest != null ? (double)rest["candidates"][0]["location"]["x"] : s.Longitude;
+                }
+            }
+
+            return listShippng;
         }
 
         public async Task<IEnumerable<Object>> GtRoutes()
@@ -90,7 +108,6 @@ namespace GisRoutes.Services
                             Activa = "Activa"
                         };
             return await query.ToListAsync();
-
         }
 
     }

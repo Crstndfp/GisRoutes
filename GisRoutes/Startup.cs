@@ -54,6 +54,8 @@ namespace GisRoutes
             opt.UseSqlServer(Configuration.GetConnectionString("DomContext")));
 
             services.AddMvc();
+            services.AddMvc()
+                .AddNewtonsoftJson();
             services.AddScoped<AuthService, AuthService>();
             services.AddScoped<OrderShippingService, OrderShippingService>();
             services.AddControllers();
