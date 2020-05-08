@@ -8,16 +8,22 @@ using Microsoft.AspNetCore.Mvc;
 using GisRoutes.RestFull;
 using GisRoutes.Dto;
 using Newtonsoft.Json.Linq;
+using GisRoutes.Utilities;
 
 namespace GisRoutes.Services
 {
     public class OrderShippingService
     {
         private readonly DomCemacoContext _context;
+        private readonly DepartmentService departmentService;
 
-        public OrderShippingService(DomCemacoContext context)
+        public OrderShippingService(
+            DomCemacoContext context,
+            DepartmentService departmentService
+            )
         {
             _context = context;
+            this.departmentService = departmentService;
         }
 
         public async Task<IEnumerable<Shipping>> GetOrderShipping(DateTime thisDay)
@@ -70,28 +76,31 @@ namespace GisRoutes.Services
                             Especialidad = "",
                             CodigoDistribuidora = "",
                             Fecha = envio.Fecha.Date.ToString("yyyy-MM-dd"),
+                            Bulto = envio.Paquetes,
                             Notas = subEnvento.Referencias
                         };
 
             IEnumerable<Shipping> listShippng = await query.ToListAsync();
-
-            ClientGisRoutes clientGisRoutes = new ClientGisRoutes();
-
             foreach (Shipping s in listShippng)
             {
                 if ( s.Latitude.Equals(0) && s.Longitude.Equals(0))
                 {
-                    JObject rest = clientGisRoutes.getGeolocationByAddress( 
-                        s.Direccion.Length >= 200 ? s.Direccion.Substring(0,199) : s.Direccion );
-                    s.Latitude = (rest == null) ? s.Latitude : (double)rest["candidates"][0]["location"]["y"];
-                    s.Longitude = rest != null ? (double)rest["candidates"][0]["location"]["x"] : s.Longitude;
+                    string[] cods = s.CodigoMunicipo.Split("-");
+                    AddressTools addressTools = new AddressTools(
+                        s.Direccion, 
+                        s.Zona, 
+                        await this.departmentService.GetDepAndMun(
+                            byte.Parse(cods[0]), byte.Parse(cods[1])));
+                    Shipping aux = addressTools.UpdateCoordinatesShipping(s);
+                    s.Latitude = aux.Latitude;
+                    s.Longitude = aux.Longitude;
                 }
             }
 
             return listShippng;
         }
 
-        public async Task<IEnumerable<Object>> GtRoutes()
+        public async Task<IEnumerable<Object>> GetRoutes()
         {
             var query = from ruta in _context.TblRuta
                         join vehiculo in _context.TblVehiculo
@@ -110,5 +119,39 @@ namespace GisRoutes.Services
             return await query.ToListAsync();
         }
 
+        public async Task<IEnumerable<Object>> GetRoutesByDate(DateTime thisDay)
+        {
+            var query = from envio in _context.TblEnvio
+                        join dRuta in _context.TblDetRuta
+                            on envio.IdEnvio equals dRuta.IdEnvio
+                        join ruta in _context.TblRuta
+                            on dRuta.IdRuta equals ruta.IdRuta
+                        join vehiculo in _context.TblVehiculo
+                            on ruta.NumVehiculo equals vehiculo.NumVehiculo
+                        join tipoVehiculo in _context.TblTipoVehiculo
+                            on vehiculo.CodTipo equals tipoVehiculo.CodTipo
+                        where DateTime.Compare(thisDay.AddDays(-1).Date, envio.Fecha.Date) == 0
+                        select new
+                        {
+                            CodigoRuta = ruta.IdRuta,
+                            NombreRuta = string.Concat("RUTA-", ruta.IdRuta),
+                            CodigoTipoRuta = ruta.NumVehiculo,
+                            TipoTransporte = tipoVehiculo.Nombre,
+                            CodigoSucursal = ruta.CodCentroDist,
+                            Activa = "Activa"
+                        };
+            return await query.Distinct().ToListAsync();
+        }
+
+        public string SaveDelivery(DeliveryResult deliveryResult)
+        {
+            if (_context.TblEnvio.Where(
+                e => e.IdEnvio == deliveryResult.NoRegistro).Any())
+            {
+                FileService fileService = new FileService();
+                return fileService.WriteDeliveryStatus(deliveryResult);
+            }
+            return "NoRegister not found";
+        }
     }
 }

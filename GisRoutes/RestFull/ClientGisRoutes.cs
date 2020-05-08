@@ -11,6 +11,7 @@ namespace GisRoutes.RestFull
 {
     public class ClientGisRoutes
     {
+        private const int CODE_OK = 200;
         public ClientGisRoutes() { }
 
         public JObject getGeolocationByAddress(string address)
@@ -27,10 +28,18 @@ namespace GisRoutes.RestFull
                 };
                 var request = new RestRequest(Method.GET);
                 IRestResponse response = client.Execute(request);
-                string resp = response.Content;
-                JObject res = JsonConvert.DeserializeObject<JObject>(resp);
-                JArray categories = (JArray)res["candidates"];
-                return (categories.Count > 0) ? res : null;
+                if (response.IsSuccessful)
+                {
+                    string resp = response.Content;
+                    JObject res = JsonConvert.DeserializeObject<JObject>(resp);
+                    JArray categories = (JArray)res["candidates"];
+                    return (categories.Count > 0) ? res : null;
+                }
+                else
+                {
+                    return null;
+                }
+                
             }
             catch (Exception)
             {

@@ -58,6 +58,8 @@ namespace GisRoutes
                 .AddNewtonsoftJson();
             services.AddScoped<AuthService, AuthService>();
             services.AddScoped<OrderShippingService, OrderShippingService>();
+            services.AddScoped<UpdateCoordinatesService, UpdateCoordinatesService>();
+            services.AddScoped<DepartmentService, DepartmentService>();
             services.AddControllers();
         }
 

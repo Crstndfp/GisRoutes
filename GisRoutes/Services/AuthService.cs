@@ -14,7 +14,8 @@ namespace GisRoutes.Services
     {
         public bool ValidateLogin(UserData userData)
         {
-            return (userData.UserName.Equals("GisRoutes") && userData.Password.Equals("mikom234sss"));
+            return (userData.UserName.Equals("GisRoutes") 
+                && userData.Password.Equals("mikom234sss"));
         }
 
         public string GenerateToke(DateTime date, string user, TimeSpan validDate)

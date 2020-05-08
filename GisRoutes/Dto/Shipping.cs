@@ -24,6 +24,7 @@ namespace GisRoutes.Dto
         public string Especialidad { get; set; }
         public string CodigoDistribuidora { get; set; }
         public string Fecha { get; set; }
+        public int? Bulto { get; set; }
         public string Notas { get; set; }
 
     }
