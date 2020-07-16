@@ -1,4 +1,5 @@
-﻿using GisRoutes.Models;
+﻿using GisRoutes.Dto;
+using GisRoutes.Models;
 using GisRoutes.Utilities;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -39,11 +40,12 @@ namespace GisRoutes.Services
 
             foreach (TblEnvioDir t in list)
             {
+                string[] st = t.Direccion.Split('|');
+                Address result = await departmentService.GetDepAndMun(
+                    t.CodDepartamento + "-" + t.CodMunicipio, 
+                    st[0], t.Zona);
                 AddressTools addressTools = new AddressTools(
-                    t.Direccion,
-                    t.Zona,
-                    await departmentService.GetDepAndMun(
-                    t.CodDepartamento, t.CodMunicipio));
+                    StringClean.FixedAddress(result));
                 TblEnvioDir aux = addressTools.UpdateCoordinatesEnvioDir(t);
                 t.GeoRefY = aux.GeoRefY;
                 t.GeoRefX = aux.GeoRefX;
@@ -68,11 +70,12 @@ namespace GisRoutes.Services
 
             foreach (TblEvento t in list)
             {
+                string[] st = t.Direccion.Split('|');
+                Address result = await departmentService.GetDepAndMun(
+                    t.CodDepartamento + "-" + t.CodMunicipio,
+                    st[0], t.Zona);
                 AddressTools addressTools = new AddressTools(
-                    t.Direccion,
-                    t.Zona,
-                    await departmentService.GetDepAndMun(
-                    t.CodDepartamento ?? ONE, t.CodMunicipio ?? ONE));
+                    StringClean.FixedAddress(result));
                 TblEvento aux = addressTools.UpdateCoordinatesEvento(t);
                 t.GeoRefY = aux.GeoRefY;
                 t.GeoRefX = aux.GeoRefX;

@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using GisRoutes.Services;
+using GisRoutes.Dto;
+using GisRoutes.Utilities;
 
 namespace GisRoutes
 {
@@ -20,7 +22,7 @@ namespace GisRoutes
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+        public IConfiguration Configuration { get; set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -56,6 +58,10 @@ namespace GisRoutes
             services.AddMvc();
             services.AddMvc()
                 .AddNewtonsoftJson();
+            //services.Configure<UserGisRoutes>(Configuration.GetSection("UserGisRoutes"));
+            //services.Configure<AuthentificationSettings>(Configuration.GetSection("AuthentificationSettings"));
+            services.AddScoped<ReadAppSettings, ReadAppSettings>();
+            services.AddScoped<FileService, FileService>();
             services.AddScoped<AuthService, AuthService>();
             services.AddScoped<OrderShippingService, OrderShippingService>();
             services.AddScoped<UpdateCoordinatesService, UpdateCoordinatesService>();

@@ -14,67 +14,28 @@ namespace GisRoutes.Utilities
     {
         private const string CANDIDATES = "candidates";
         private const string LOCATION = "location";
-        private const string NAMEZONE = "zona";
-        private const string WITHOUTZONE = "sz";
-        private const string SPACE = " ";
-        private const string LATITUDE = "Y";
-        private const string LONGITUDE = "X";
+        private const string LATITUDE = "y";
+        private const string LONGITUDE = "x";
         private const int GETFIRST = 0;
-        private const int LIMITWITHOUTZONE = 170;
-        private const int LIMITWITHZONE = 163;
 
         private readonly string address;
-        private readonly string zone;
-        private readonly string depAndMun;
 
         public AddressTools(
-            string addrerss,
-            string zone,
-            string depAndMun)
+            string addrerss)
         {
             this.address = addrerss;
-            this.zone = zone;
-            this.depAndMun = depAndMun;
         }
-
-        public string ArmAddressToSeach()
-        {
-            string addressToSearch;
-
-            if (this.address.ToLower().Contains(NAMEZONE) 
-                || this.zone.ToLower().Equals(WITHOUTZONE))
-            {
-                addressToSearch = TernaryAddress(LIMITWITHZONE);
-                return addressToSearch + SPACE + this.depAndMun;
-          
-            }
-            else
-            {
-                addressToSearch = TernaryAddress(LIMITWITHOUTZONE);
-                return addressToSearch 
-                        + SPACE 
-                        + NAMEZONE 
-                        + SPACE 
-                        + this.zone 
-                        + SPACE 
-                        + this.depAndMun;
-            }
-        }
-
         private string TernaryAddress(int limit)
         {
             return (this.address.Length >= limit)
                     ? this.address.Substring(GETFIRST, limit - 1)
                     : this.address;
         }
-
         private JObject RequestGisRoutes()
         {
             ClientGisRoutes clientGisRoutes = new ClientGisRoutes();
-            return clientGisRoutes.getGeolocationByAddress(
-                        ArmAddressToSeach());
+            return clientGisRoutes.getGeolocationByAddress(this.address);
         }
-
         public Shipping UpdateCoordinatesShipping(Shipping shipping)
         {
             JObject rest = RequestGisRoutes();
@@ -86,7 +47,6 @@ namespace GisRoutes.Utilities
                 : shipping.Longitude;
             return shipping;
         }
-
         public TblEnvioDir UpdateCoordinatesEnvioDir(TblEnvioDir tblEnvioDir)
         {
             JObject rest = RequestGisRoutes();
@@ -98,7 +58,6 @@ namespace GisRoutes.Utilities
                 : tblEnvioDir.GeoRefX;
             return tblEnvioDir;
         }
-
         public TblEvento UpdateCoordinatesEvento(TblEvento tblEvento)
         {
             JObject rest = RequestGisRoutes();

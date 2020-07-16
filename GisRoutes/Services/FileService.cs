@@ -1,4 +1,5 @@
 ﻿using GisRoutes.Dto;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.CompilerServices;
 using System;
 using System.Collections.Generic;
@@ -12,23 +13,40 @@ namespace GisRoutes.Services
 {
     public class FileService
     {
-        public FileService() { }
+        private const string SPACE = " ";
+        private const string GUION = "-";
+        private const string USEDATE = "yyyyMMddhhmm";
+        private const string SUCCESS = "Success";
+        private const string FILEEXIST = "File already created";
+        private const string DIRECTORYNOTFOUND = "Directory not found";
+        private const string FILESERVER = @"\\srvcatm2\c$\FTPCemaco\LocalUser\ftpdisatel\IN";
+
+        private readonly ILogger _logger;
+        public FileService(ILogger<FileService> logger)
+        {
+            _logger = logger;
+        }
 
         public string WriteDeliveryStatus(DeliveryResult deliveryResult)
         {
             string data = string.Empty;
             data = AppendDataArray(data, deliveryResult.NoRegistro, 1, 16);
             data = AppendDataArray(data, deliveryResult.IdResultado, 16, 18);
-            data = AppendDataArray(data, deliveryResult.Persona, 18, 58);
-            data = AppendDataArray(data, deliveryResult.Fecha.ToString("yyyyMMddhhmm"), 58, -1);
+            data = AppendDataArray(data, deliveryResult.Persona
+                .Trim()
+                .Replace("\n"," ")
+                .Replace("\r", "")
+                , 18, 58);
+            data = AppendDataArray(data, deliveryResult.Fecha.ToString(USEDATE), 58, -1);
 
             try
             {
-                if (Directory.Exists(@"C:\Users\itcristian\Documents\"))
+                if (Directory.Exists(FILESERVER))
                 {
-                    string path = @"C:\Users\itcristian\Documents\" +
+                    string path = FILESERVER + @"\" +
                         FileManeDelivery(deliveryResult.Fecha, deliveryResult.NoRegistro) +
                         ".txt";
+                    _logger.LogInformation("Path " + path);
 
                     if (!File.Exists(path))
                     {
@@ -36,15 +54,16 @@ namespace GisRoutes.Services
                         using StreamWriter sw = File.CreateText(path);
                         sw.Write(data);
                         sw.Close();
-                        return "Success";
+                        return SUCCESS;
                     }
-                    return "File already created";
+                    return FILEEXIST;
                 }
-                return "Directory not found";
+                return DIRECTORYNOTFOUND;
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return "Communication error";
+                _logger.LogError(e.StackTrace);
+                return e.StackTrace ;
             }
         }
 
@@ -52,11 +71,11 @@ namespace GisRoutes.Services
         {
             return string.Concat(
                 noRegistro,
-                "-",
+                GUION,
                 dateTime.Year,
                 dateTime.Month,
                 dateTime.Day,
-                "-",
+                GUION,
                 dateTime.Hour,
                 dateTime.Minute,
                 dateTime.Second
@@ -76,7 +95,7 @@ namespace GisRoutes.Services
                     cont < finish; 
                     cont++)
                 {
-                    app += " ";
+                    app += SPACE;
                 }
             }
             else if (finish == -1)

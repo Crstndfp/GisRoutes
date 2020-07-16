@@ -22,9 +22,10 @@ namespace GisRoutes.Dto
         public int TotalVolumen { get; set; }
         public string CodigoRutaDespacho { get; set; }
         public string Especialidad { get; set; }
-        public string CodigoDistribuidora { get; set; }
+        public string CodigoCentroDistribucion { get; set; }
         public string Fecha { get; set; }
         public int? Bulto { get; set; }
+        public string NombreCanalDistribucion { get; set; }
         public string Notas { get; set; }
 
     }
