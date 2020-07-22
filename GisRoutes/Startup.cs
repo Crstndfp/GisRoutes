@@ -4,14 +4,18 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
-using GisRoutes.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using GisRoutes.Services;
-using GisRoutes.Dto;
-using GisRoutes.Utilities;
+using Models.ModelsWms3;
+using Models.ModelsDomCemaco;
+using BussinesLogic.Authentication;
+using Repository.Stream;
+using BussinesLogic.ShippingOrder;
+using Repository.DomCemaco;
+using Repository.Wms3;
+using System.ComponentModel.DataAnnotations;
 
 namespace GisRoutes
 {
@@ -54,19 +58,24 @@ namespace GisRoutes
 
             services.AddDbContext<DomCemacoContext>(opt => 
             opt.UseSqlServer(Configuration.GetConnectionString("DomContext")));
+            services.AddDbContext<WMS3Context>(opt =>
+            opt.UseSqlServer(Configuration.GetConnectionString("Wms3Context")));
 
             services.AddMvc();
             services.AddMvc()
                 .AddNewtonsoftJson();
-            //services.Configure<UserGisRoutes>(Configuration.GetSection("UserGisRoutes"));
-            //services.Configure<AuthentificationSettings>(Configuration.GetSection("AuthentificationSettings"));
-            services.AddScoped<ReadAppSettings, ReadAppSettings>();
-            services.AddScoped<FileService, FileService>();
+
+            //upload controller
             services.AddScoped<AuthService, AuthService>();
-            services.AddScoped<OrderShippingService, OrderShippingService>();
-            services.AddScoped<UpdateCoordinatesService, UpdateCoordinatesService>();
-            services.AddScoped<DepartmentService, DepartmentService>();
-            services.AddControllers();
+            services.AddScoped<UpdateCoordinates, UpdateCoordinates>();
+            services.AddScoped<ShippingOrder, ShippingOrder>();
+            //upload bussines login
+            services.AddScoped<ReadAppSettings, ReadAppSettings>();
+            services.AddScoped<ShippingOrderRepository, ShippingOrderRepository>();
+            services.AddScoped<PreOrdersRepository, PreOrdersRepository>();
+            services.AddScoped<DepartmentRepository, DepartmentRepository>();
+            services.AddScoped<FileRepository, FileRepository>(); //validar carga
+            services.AddScoped<UpdateCoordinatesRepository, UpdateCoordinatesRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

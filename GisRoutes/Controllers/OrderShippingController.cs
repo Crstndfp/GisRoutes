@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using GisRoutes.Dto;
-using GisRoutes.Models;
-using GisRoutes.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RestSharp;
+using BussinesLogic.ShippingOrder;
+using Assets.Dto;
 
 namespace GisRoutes.Controllers
 {
@@ -18,18 +17,18 @@ namespace GisRoutes.Controllers
     [ApiController]
     public class OrderShippingController : ControllerBase
     {
-        private readonly OrderShippingService _orderShipping;
+        private readonly ShippingOrder _shippingOrder;
 
-        public OrderShippingController(OrderShippingService orderShipping)
+        public OrderShippingController(ShippingOrder shippingOrder)
         {
-            _orderShipping = orderShipping;
+            _shippingOrder = shippingOrder;
         }
 
         [HttpGet]
         [Route("get-orders-for-today")]
         public async Task<ActionResult> GetOrdersShippingForToday()
         {
-            return Ok(await _orderShipping.GetOrderShipping(DateTime.Today));
+            return Ok(await _shippingOrder.GetOrderShipping(DateTime.Today));
         }
 
         [HttpGet]
@@ -38,7 +37,7 @@ namespace GisRoutes.Controllers
         {
             try
             {
-                return Ok(await _orderShipping.GetOrderShipping(DateTime.Parse(date)));
+                return Ok(await _shippingOrder.GetOrderShipping(DateTime.Parse(date)));
             }
             catch (FormatException)
             {
@@ -50,7 +49,7 @@ namespace GisRoutes.Controllers
         [Route("get-routes")]
         public async Task<ActionResult> GetTblDetEnvio()
         {
-            return Ok(await _orderShipping.GetRoutes());
+            return Ok(await _shippingOrder.GetRoutes());
         }
 
         [HttpGet]
@@ -60,7 +59,7 @@ namespace GisRoutes.Controllers
             try
             {
                 return Ok(
-                    await _orderShipping.GetRoutesByDate(DateTime.Parse(date)
+                    await _shippingOrder.GetRoutesByDate(DateTime.Parse(date)
                     ));
             }
             catch (FormatException)
@@ -70,10 +69,10 @@ namespace GisRoutes.Controllers
         }
 
         [HttpPost]
-        [Route("save-delivery")]
-        public IActionResult SaveDelivery(DeliveryResult deliveryResult)
+        [Route("save-deliverys")]
+        public async Task<IActionResult> SaveDelivery(DeliveryResultDto deliveryResult)
         {
-            string status = _orderShipping.SaveDelivery(deliveryResult);
+            string status = await _shippingOrder.SaveDelivery(deliveryResult);
             if (status.Equals("Success"))
             {
                 return Created(status, deliveryResult);

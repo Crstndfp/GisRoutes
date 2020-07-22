@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using GisRoutes.Dto;
-using GisRoutes.RestFull;
-using GisRoutes.Services;
+using Assets.Dto;
+using BussinesLogic.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -23,7 +22,7 @@ namespace GisRoutes.Controllers
         }
 
         [HttpPost("token")]
-        public IActionResult Token([FromBody] UserData userData)
+        public IActionResult Token([FromBody] UserDataDto userData)
         {
             if (_authService.ValidateLogin(userData))
             {
