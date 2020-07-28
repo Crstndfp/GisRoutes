@@ -1,4 +1,5 @@
 ﻿
+using Assets.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
@@ -8,7 +9,6 @@ namespace Repository.RestFull
 {
     public class ClientGisRoutes
     {
-        private const int CODE_OK = 200;
         public ClientGisRoutes() { }
 
         public JObject getGeolocationByAddress(string address)
@@ -29,8 +29,8 @@ namespace Repository.RestFull
                 {
                     string resp = response.Content;
                     JObject res = JsonConvert.DeserializeObject<JObject>(resp);
-                    JArray categories = (JArray)res["candidates"];
-                    return (categories.Count > 0) ? res : null;
+                    JArray categories = (JArray)res[Const.CANDIDATES];
+                    return (categories.Count > Const.ZERO) ? res : null;
                 }
                 else
                 {

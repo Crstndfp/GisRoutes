@@ -25,5 +25,7 @@ namespace Models.ModelsWms3
         public int? Lineas { get; set; }
         public string Recolector { get; set; }
         public string NombreRecolector { get; set; }
+        public string EmpresaTransporte { get; set; }
+        public string Guia { get; set; }
     }
 }

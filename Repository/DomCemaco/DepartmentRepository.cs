@@ -5,15 +5,22 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Models.ModelsDomCemaco;
 using Assets.Dto;
+using Microsoft.Extensions.Logging;
+using Assets.Utilities;
 
 namespace Repository.DomCemaco
 {
     public class DepartmentRepository
     {
         private readonly DomCemacoContext _context;
-        public DepartmentRepository(DomCemacoContext context)
+        private readonly ILogger _logger;
+        public DepartmentRepository(
+            DomCemacoContext context,
+            ILogger<DepartmentRepository> logger
+            )
         {
             _context = context;
+            _logger = logger;
         }
         public async Task<string> GetDepAndMun(
             byte codDepartment,
@@ -26,13 +33,14 @@ namespace Repository.DomCemaco
                                 on departamento.CodDepartamento equals municipio.CodDepartamento
                             where departamento.CodDepartamento == codDepartment
                                 && municipio.CodMunicipio == codMunicipality
-                            select municipio.Nombre + " " + departamento.Nombre;
+                            select municipio.Nombre + Const.SPACE + departamento.Nombre;
 
                 return await query.FirstAsync();
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return "";
+                _logger.LogError(e.Message, e.StackTrace);
+                return Const.EMPTY;
             }
 
         }
@@ -41,14 +49,14 @@ namespace Repository.DomCemaco
             string street,
             string zone)
         {
-            string[] d = codDepAndMun.Split('-');
+            string[] d = codDepAndMun.Split(Const.GUION);
             try
             {
                 var query = from departamento in _context.TblDepartamento
                             join municipio in _context.TblMunicipio
                                 on departamento.CodDepartamento equals municipio.CodDepartamento
-                            where departamento.CodDepartamento == Byte.Parse(d[0])
-                                && municipio.CodMunicipio == Byte.Parse(d[1])
+                            where departamento.CodDepartamento == Byte.Parse(d[Const.ZERO])
+                                && municipio.CodMunicipio == Byte.Parse(d[Const.ONE])
                             select new AddressDto
                             {
                                 street = street,
@@ -59,14 +67,15 @@ namespace Repository.DomCemaco
 
                 return await query.FirstAsync();
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                _logger.LogError(e.Message, codDepAndMun, e.StackTrace);
                 return new AddressDto
                 {
                     street = street,
                     Zone = zone,
-                    township = "",
-                    department = ""
+                    township = Const.EMPTY,
+                    department = Const.EMPTY
                 };
             }
 

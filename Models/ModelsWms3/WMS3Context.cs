@@ -209,6 +209,7 @@ namespace Models.ModelsWms3
         public virtual DbSet<TblGrupoArticulo1> TblGrupoArticulo1 { get; set; }
         public virtual DbSet<TblGrupoMarca> TblGrupoMarca { get; set; }
         public virtual DbSet<TblGuiaEnvio> TblGuiaEnvio { get; set; }
+        public virtual DbSet<TblHojaPicking> TblHojaPicking { get; set; }
         public virtual DbSet<TblIdtarjetaComision> TblIdtarjetaComision { get; set; }
         public virtual DbSet<TblImgArticulo> TblImgArticulo { get; set; }
         public virtual DbSet<TblInterfazBloq> TblInterfazBloq { get; set; }
@@ -441,6 +442,7 @@ namespace Models.ModelsWms3
         public virtual DbSet<ZVwDashboardecEmpresaTransporte> ZVwDashboardecEmpresaTransporte { get; set; }
         public virtual DbSet<ZVwDashboardecEmpresaTransporteCm> ZVwDashboardecEmpresaTransporteCm { get; set; }
         public virtual DbSet<ZVwHorasEntrega> ZVwHorasEntrega { get; set; }
+        public virtual DbSet<ZVwLbTransaccionesEc> ZVwLbTransaccionesEc { get; set; }
         public virtual DbSet<ZVwPickingFechaOla> ZVwPickingFechaOla { get; set; }
         public virtual DbSet<ZVwPickingPorEntregaDup> ZVwPickingPorEntregaDup { get; set; }
         public virtual DbSet<ZVwPickingPorEntregaFinal> ZVwPickingPorEntregaFinal { get; set; }
@@ -459,6 +461,7 @@ namespace Models.ModelsWms3
         public virtual DbSet<ZtblAreaDistCentroDomingo> ZtblAreaDistCentroDomingo { get; set; }
         public virtual DbSet<ZtblAreaDistCentroDomingopm> ZtblAreaDistCentroDomingopm { get; set; }
         public virtual DbSet<ZtblAreaDistCentroSemana> ZtblAreaDistCentroSemana { get; set; }
+        public virtual DbSet<ZtblAuxiliarGisroutes> ZtblAuxiliarGisroutes { get; set; }
         public virtual DbSet<ZtblEntregaGuia> ZtblEntregaGuia { get; set; }
         public virtual DbSet<ZtblEntregaProveedor> ZtblEntregaProveedor { get; set; }
         public virtual DbSet<ZtblEntregaProveedorFotos> ZtblEntregaProveedorFotos { get; set; }
@@ -476,7 +479,6 @@ namespace Models.ModelsWms3
         public virtual DbSet<ZvwPedidoIncluyeMuebles> ZvwPedidoIncluyeMuebles { get; set; }
         public virtual DbSet<ZvwPedidoIncluyePromocion> ZvwPedidoIncluyePromocion { get; set; }
         public virtual DbSet<ZvwPrimeraCompra> ZvwPrimeraCompra { get; set; }
-         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ArchDetFactura>(entity =>
@@ -5220,6 +5222,9 @@ namespace Models.ModelsWms3
                 entity.HasIndex(e => new { e.NumDocumento, e.Cantidad })
                     .HasName("<Num_Documento,Cantidad>");
 
+                entity.HasIndex(e => new { e.CodTipo, e.NumDocumento, e.LineaDoc })
+                    .HasName("TblDet_OlaDoc");
+
                 entity.HasIndex(e => new { e.NumOla, e.LineaDoc, e.Sku, e.Skufact })
                     .HasName("idx_num_linea_sku_skufact");
 
@@ -6810,7 +6815,7 @@ namespace Models.ModelsWms3
 
                 entity.Property(e => e.CodSocio)
                     .HasColumnName("Cod_Socio")
-                    .HasMaxLength(25);
+                    .HasMaxLength(40);
 
                 entity.Property(e => e.CodTipo).HasColumnName("Cod_Tipo");
 
@@ -7806,18 +7811,18 @@ namespace Models.ModelsWms3
 
             modelBuilder.Entity<TblGrupoArticulo>(entity =>
             {
-                entity.HasNoKey();
+                entity.HasKey(e => e.CodGrupo)
+                    .HasName("PK_GrupoArticulo");
 
                 entity.ToTable("Tbl_GrupoArticulo");
+
+                entity.Property(e => e.CodGrupo)
+                    .HasColumnName("Cod_Grupo")
+                    .HasMaxLength(20);
 
                 entity.Property(e => e.CodEmpresa)
                     .HasColumnName("Cod_Empresa")
                     .HasMaxLength(10);
-
-                entity.Property(e => e.CodGrupo)
-                    .IsRequired()
-                    .HasColumnName("Cod_Grupo")
-                    .HasMaxLength(20);
 
                 entity.Property(e => e.CodPadre)
                     .HasColumnName("Cod_Padre")
@@ -7894,6 +7899,34 @@ namespace Models.ModelsWms3
                     .HasMaxLength(1)
                     .IsUnicode(false)
                     .IsFixedLength();
+            });
+
+            modelBuilder.Entity<TblHojaPicking>(entity =>
+            {
+                entity.HasKey(e => new { e.CodEmpresa, e.CodTipo, e.NumDocumento })
+                    .HasName("PK_HojaPicking");
+
+                entity.ToTable("Tbl_HojaPicking");
+
+                entity.Property(e => e.CodEmpresa)
+                    .HasColumnName("Cod_Empresa")
+                    .HasMaxLength(25);
+
+                entity.Property(e => e.CodTipo).HasColumnName("Cod_Tipo");
+
+                entity.Property(e => e.NumDocumento)
+                    .HasColumnName("Num_Documento")
+                    .HasMaxLength(25);
+
+                entity.Property(e => e.Error).HasColumnType("text");
+
+                entity.Property(e => e.Fecha).HasColumnType("datetime");
+
+                entity.Property(e => e.FechaImp).HasColumnType("datetime");
+
+                entity.Property(e => e.IdUsrImp)
+                    .HasColumnName("ID_UsrImp")
+                    .HasMaxLength(40);
             });
 
             modelBuilder.Entity<TblIdtarjetaComision>(entity =>
@@ -14689,6 +14722,12 @@ namespace Models.ModelsWms3
                     .HasColumnName("DOC_SAP")
                     .HasMaxLength(25);
 
+                entity.Property(e => e.EmpresaTransporte)
+                    .IsRequired()
+                    .HasColumnName("EMPRESA_TRANSPORTE")
+                    .HasMaxLength(9)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.Estado)
                     .HasColumnName("ESTADO")
                     .HasMaxLength(20)
@@ -14701,6 +14740,10 @@ namespace Models.ModelsWms3
                 entity.Property(e => e.FechaCalendarioPed)
                     .HasColumnName("FECHA_CALENDARIO_PED")
                     .HasColumnType("datetime");
+
+                entity.Property(e => e.Guia)
+                    .HasColumnName("GUIA")
+                    .HasMaxLength(25);
 
                 entity.Property(e => e.HoraDiaFact).HasColumnName("HORA_DIA_FACT");
 
@@ -14915,6 +14958,34 @@ namespace Models.ModelsWms3
                 entity.Property(e => e.NumDocumento)
                     .HasColumnName("Num_Documento")
                     .HasMaxLength(25);
+            });
+
+            modelBuilder.Entity<ZVwLbTransaccionesEc>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("Z_VW_LB_TRANSACCIONES_EC");
+
+                entity.Property(e => e.CodTienda)
+                    .IsRequired()
+                    .HasColumnName("Cod_Tienda")
+                    .HasMaxLength(10);
+
+                entity.Property(e => e.DiaId)
+                    .HasColumnName("Dia_ID")
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IdAsociado)
+                    .IsRequired()
+                    .HasColumnName("ID_Asociado")
+                    .HasMaxLength(25);
+
+                entity.Property(e => e.Sku)
+                    .HasColumnName("SKU")
+                    .HasMaxLength(25);
+
+                entity.Property(e => e.VentaVal).HasColumnType("money");
             });
 
             modelBuilder.Entity<ZVwPickingFechaOla>(entity =>
@@ -15455,6 +15526,25 @@ namespace Models.ModelsWms3
                     .IsRequired()
                     .HasColumnName("Cod_CentroDist")
                     .HasMaxLength(10);
+            });
+
+            modelBuilder.Entity<ZtblAuxiliarGisroutes>(entity =>
+            {
+                entity.HasKey(e => e.NumDocumento)
+                    .HasName("PK");
+
+                entity.ToTable("ZTbl_AuxiliarGisroutes");
+
+                entity.HasIndex(e => new { e.NumDocumento, e.Estado })
+                    .HasName("IDX_CARGA_GEO");
+
+                entity.Property(e => e.NumDocumento)
+                    .HasColumnName("Num_Documento")
+                    .HasMaxLength(25);
+
+                entity.Property(e => e.Estado)
+                    .IsRequired()
+                    .HasMaxLength(12);
             });
 
             modelBuilder.Entity<ZtblEntregaGuia>(entity =>

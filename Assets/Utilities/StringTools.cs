@@ -7,37 +7,37 @@ namespace Assets.Utilities
     {
         public static string FixedAddress(string address)
         {
-            return address.Trim(' ').Trim().Replace(ConstNames.RETURNLINE, ConstNames.EMPTY)
-                .Replace(ConstNames.BREACKLINE, ConstNames.SPACE);
+            return address.Trim(' ').Trim().Replace(Const.RETURNLINE, Const.EMPTY)
+                .Replace(Const.BREACKLINE, Const.SPACE);
         }
         public static string FixedAddress(AddressDto address)
         {
             address.street = address.street.Trim(' ')
                 .Trim()
-                .Replace(ConstNames.RETURNLINE, ConstNames.EMPTY)
-                .Replace(ConstNames.BREACKLINE, ConstNames.SPACE);
+                .Replace(Const.RETURNLINE, Const.EMPTY)
+                .Replace(Const.BREACKLINE, Const.SPACE);
             string addressToSearch;
-            if (address.street.ToLower().Contains(ConstNames.NAMEZONE)
-                || address.Zone.ToLower().Equals(ConstNames.WITHOUTZONE))
+            if (address.street.ToLower().Contains(Const.NAMEZONE)
+                || address.Zone.ToLower().Equals(Const.WITHOUTZONE))
             {
-                addressToSearch = TernaryAddress(address.street, ConstNames.LIMITWITHZONE);
+                addressToSearch = TernaryAddress(address.street, Const.LIMITWITHZONE);
             }
             else
             {
-                addressToSearch = TernaryAddress(address.street, ConstNames.LIMITWITHOUTZONE);
-                addressToSearch += ConstNames.SPACECOMMA
-                                    + ConstNames.NAMEZONE
-                                    + ConstNames.SPACE
+                addressToSearch = TernaryAddress(address.street, Const.LIMITWITHOUTZONE);
+                addressToSearch += Const.SPACECOMMA
+                                    + Const.NAMEZONE
+                                    + Const.SPACE
                                     + address.Zone;
             }
             if (!address.street.ToLower().Contains(address.township.ToLower()))
             {
-                addressToSearch += ConstNames.SPACECOMMA
+                addressToSearch += Const.SPACECOMMA
                                     + address.township;
             }
             if (!address.street.ToLower().Contains(address.department.ToLower()))
             {
-                addressToSearch += ConstNames.SPACECOMMA
+                addressToSearch += Const.SPACECOMMA
                                     + address.department;
             }
             return addressToSearch;
@@ -45,18 +45,18 @@ namespace Assets.Utilities
         private static string TernaryAddress(string address, int limit)
         {
             return (address.Length >= limit)
-                    ? address.Substring(ConstNames.GETFIRST, limit - 1)
+                    ? address.Substring(Const.GETFIRST, limit - 1)
                     : address;
         }
         public static string FileManeDelivery(DateTime dateTime, string noRegistro)
         {
             return string.Concat(
                 noRegistro,
-                ConstNames.GUION,
+                Const.GUION,
                 dateTime.Year,
                 dateTime.Month,
                 dateTime.Day,
-                ConstNames.GUION,
+                Const.GUION,
                 dateTime.Hour,
                 dateTime.Minute,
                 dateTime.Second
@@ -75,7 +75,7 @@ namespace Assets.Utilities
                     cont < finish;
                     cont++)
                 {
-                    app += ConstNames.SPACE;
+                    app += Const.SPACE;
                 }
             }
             else if (finish == -1)

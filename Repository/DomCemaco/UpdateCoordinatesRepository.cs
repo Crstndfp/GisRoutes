@@ -1,6 +1,7 @@
 ﻿using Assets.Dto;
 using Assets.Utilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Models.ModelsDomCemaco;
 using Repository.Mappers;
 using System;
@@ -12,68 +13,86 @@ namespace Repository.DomCemaco
 {
     public class UpdateCoordinatesRepository
     {
-        private const int ONE = 1;
-        private const int ZERO = 0;
 
         private readonly DomCemacoContext _context;
+        private readonly ILogger _logger;
 
-        public UpdateCoordinatesRepository(DomCemacoContext context)
+        public UpdateCoordinatesRepository(
+            DomCemacoContext context,
+            ILogger<UpdateCoordinatesRepository> logger
+            )
         {
             _context = context;
+            _logger = logger;
         }
         public async Task<IEnumerable<TableShippingDirDto>> GetTblenvioDirToday() { 
         
             DateTime today = DateTime.Now;
-            var query = from envio in _context.TblEnvio
-                        join envioDir in _context.TblEnvioDir
-                            on envio.IdEnvio equals envioDir.IdEnvio
-                        where
-                            DateTime.Compare(today.AddHours(-ONE).AddMinutes(-today.Minute), envio.Fecha) < ZERO
-                            && DateTime.Compare(today.AddMinutes(-today.Minute), envio.Fecha) > ZERO
-                            && envioDir.GeoRefX.Equals(ZERO) && envioDir.GeoRefY.Equals(ZERO) 
-                        select envioDir;
-            return MapperListDomCemaco.MapList(await query.ToListAsync());
+            try
+            {
+                var query = from envio in _context.TblEnvio
+                            join envioDir in _context.TblEnvioDir
+                                on envio.IdEnvio equals envioDir.IdEnvio
+                            where
+                                DateTime.Compare(today.AddHours(-Const.ONE).AddMinutes(-today.Minute), envio.Fecha) < Const.ZERO
+                                && DateTime.Compare(today.AddMinutes(-today.Minute), envio.Fecha) > Const.ZERO
+                                && envioDir.GeoRefX.Equals(Const.ZERO) && envioDir.GeoRefY.Equals(Const.ZERO)
+                            select envioDir;
+                return MapperListDomCemaco.MapList(await query.ToListAsync());
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.Message, e.StackTrace);
+                return new List<TableShippingDirDto>();
+            }
+            
         }
         public async Task<IEnumerable<TableEventDto>> GetTblEventosToday()
         {
-            DateTime today = DateTime.Now;
-            var query = from envio in _context.TblEnvio
-                        join evento in _context.TblEvento
-                            on envio.IdEvento equals evento.IdEvento
-                        where
-                            DateTime.Compare(today.AddHours(-ONE).AddMinutes(-today.Minute), envio.Fecha) < ZERO
-                            && DateTime.Compare(today.AddMinutes(-today.Minute), envio.Fecha) > ZERO
-                            && evento.GeoRefX.Equals(ZERO) && evento.GeoRefY.Equals(ZERO)
-                        select evento;
-
-            return MapperListDomCemaco.MapList(await query.ToListAsync());
+            try
+            {
+                DateTime today = DateTime.Now;
+                var query = from envio in _context.TblEnvio
+                            join evento in _context.TblEvento
+                                on envio.IdEvento equals evento.IdEvento
+                            where
+                                DateTime.Compare(today.AddHours(-Const.ONE).AddMinutes(-today.Minute), envio.Fecha) < Const.ZERO
+                                && DateTime.Compare(today.AddMinutes(-today.Minute), envio.Fecha) > Const.ZERO
+                                && evento.GeoRefX.Equals(Const.ZERO) && evento.GeoRefY.Equals(Const.ZERO)
+                            select evento;
+                return MapperListDomCemaco.MapList(await query.ToListAsync());
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.Message, e.StackTrace);
+                return new List<TableEventDto>();
+            }
+            
         }
-        public TableShippingDirDto UpdateTblEnvioDir(TableShippingDirDto tableShippingDirDto)
+        public void UpdateTblEnvioDir(TableShippingDirDto tableShippingDirDto)
         {
             TblEnvioDir tblEnvioDir = MapperDomCemaco.Map(tableShippingDirDto);
             try
             {
                 _context.TblEnvioDir.Update(tblEnvioDir);
-                _context.SaveChanges();
-                return MapperDomCemaco.Map(tblEnvioDir);
+                _context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException e)
             {
-                return null;
+                _logger.LogError(e.Message, e.StackTrace);
             }
         }
-        public TableEventDto UpdateTblEvento(TableEventDto tableEventDto)
+        public void UpdateTblEvento(TableEventDto tableEventDto)
         {
             TblEvento tblEvento = MapperDomCemaco.Map(tableEventDto);
             try
             {
                 _context.TblEvento.Update(tblEvento);
-                _context.SaveChanges();
-                return MapperDomCemaco.Map(tblEvento);
+                _context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException e)
             {
-                return null;
+                _logger.LogError(e.Message, e.StackTrace);
             }
         }
     }

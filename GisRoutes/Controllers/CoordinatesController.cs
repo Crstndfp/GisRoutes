@@ -21,16 +21,11 @@ namespace GisRoutes.Controllers
 
         [HttpGet]
         [Route("get-shipping-without-coordinates")]
-        public async Task<IActionResult> GetEnvioDirWithoutCoordinates()
+        public IActionResult GetEnvioDirWithoutCoordinates()
         {
-            return Ok(await _updateCoordinates.UpdateCoordinatesEnvioDir());
-        }
-
-        [HttpGet]
-        [Route("get-event-without-coordinates")]
-        public async Task<IActionResult> GetEventoDirWithoutCoordinates()
-        {
-            return Ok(await _updateCoordinates.UpdateCoordinatesEnvento());
+            Task t = _updateCoordinates.UpdateCoordinatesAll();
+            t.Wait();
+            return Ok();
         }
     }
 }

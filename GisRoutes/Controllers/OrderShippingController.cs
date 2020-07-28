@@ -46,21 +46,12 @@ namespace GisRoutes.Controllers
         }
 
         [HttpGet]
-        [Route("get-routes")]
-        public async Task<ActionResult> GetTblDetEnvio()
-        {
-            return Ok(await _shippingOrder.GetRoutes());
-        }
-
-        [HttpGet]
-        [Route("get-routes-by-date")]
-        public async Task<ActionResult> GetRoutesByDate(string date)
+        [Route("get-orders-today-new")]
+        public async Task<ActionResult> GetOrdersShippingForDayNew()
         {
             try
             {
-                return Ok(
-                    await _shippingOrder.GetRoutesByDate(DateTime.Parse(date)
-                    ));
+                return Ok(await _shippingOrder.GetOrderShippingNew(DateTime.Today));
             }
             catch (FormatException)
             {
@@ -69,7 +60,7 @@ namespace GisRoutes.Controllers
         }
 
         [HttpPost]
-        [Route("save-deliverys")]
+        [Route("save-delivery")]
         public async Task<IActionResult> SaveDelivery(DeliveryResultDto deliveryResult)
         {
             string status = await _shippingOrder.SaveDelivery(deliveryResult);

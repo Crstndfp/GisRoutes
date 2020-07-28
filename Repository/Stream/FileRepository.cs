@@ -21,15 +21,15 @@ namespace Repository.Stream
             data = StringTools.AppendDataArray(data, deliveryResult.IdResultado, 16, 18);
             data = StringTools.AppendDataArray(data, deliveryResult.Persona
                 .Trim()
-                .Replace(ConstNames.BREACKLINE, ConstNames.SPACE)
-                .Replace(ConstNames.RETURNLINE, ConstNames.EMPTY)
+                .Replace(Const.BREACKLINE, Const.SPACE)
+                .Replace(Const.RETURNLINE, Const.EMPTY)
                 , 18, 58);
-            data = StringTools.AppendDataArray(data, deliveryResult.Fecha.ToString(ConstNames.USEDATE), 58, -1);
+            data = StringTools.AppendDataArray(data, deliveryResult.Fecha.ToString(Const.USEDATE), 58, -1);
             try
             {
-                if (Directory.Exists(ConstNames.FILESERVER))
+                if (Directory.Exists(Const.FILESERVER))
                 {
-                    string path = ConstNames.FILESERVER + @"\" +
+                    string path = Const.FILESERVER + @"\" +
                         StringTools.FileManeDelivery(deliveryResult.Fecha, deliveryResult.NoRegistro) +
                         ".txt";
                     _logger.LogInformation("Path " + path);
@@ -39,15 +39,15 @@ namespace Repository.Stream
                         using StreamWriter sw = File.CreateText(path);
                         sw.Write(data);
                         sw.Close();
-                        return ConstNames.SUCCESS;
+                        return Const.SUCCESS;
                     }
-                    return ConstNames.FILEEXIST;
+                    return Const.FILEEXIST;
                 }
-                return ConstNames.DIRECTORYNOTFOUND;
+                return Const.DIRECTORYNOTFOUND;
             }
             catch (Exception e)
             {
-                _logger.LogError(e.StackTrace);
+                _logger.LogError(e.Message, e.StackTrace);
                 return e.StackTrace;
             }
         }
