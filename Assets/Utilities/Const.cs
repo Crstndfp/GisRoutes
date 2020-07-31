@@ -26,6 +26,7 @@ namespace Assets.Utilities
         public const string CODEOFAREA = "502";
         public const string STRECG = "EC-";
         public const string STRE = "E";
+        public const string STRD = "D";
         public const string STREC = "EC";
         public const string STRZ = "Z";
         public const string VEHICLEGISROUTES = "GISROUTES";

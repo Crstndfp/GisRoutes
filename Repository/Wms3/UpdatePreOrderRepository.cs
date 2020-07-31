@@ -36,6 +36,7 @@ namespace Repository.Wms3
                                 on aux.NumDocumento equals pedidoDir.NumDocumento
                             where aux.Estado.Equals(StateAuxiliarGisRoutes.JOINED)
                              && pedidoDir.Tipo.Equals(Const.STRE)
+                             && pedidoDir.Transporte.Equals(Const.STRD)
                             select new AuxGisRoutesDto
                             {
                                 NumDocumento = pedidoDir.NumDocumento,

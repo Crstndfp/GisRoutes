@@ -46,6 +46,7 @@ namespace Repository.Wms3
                             where DateTime.Compare(thisDay.Date, pedido.Fecha.Date) == Const.ZERO
                                     && pedido.DocSap.Contains(Const.STRECG)
                                     && pedidoDir.Tipo.Equals(Const.STRE)
+                                    && pedidoDir.Transporte.Equals(Const.STRD)
                                     && !pedidoDir.Nombre.Substring(Const.ZERO,Const.SEVEN).Contains(Const.RETIRAR)
                                     && !auxiliar.Estado.Equals(StateAuxiliarGisRoutes.READ)
                             select new ShippingDto
