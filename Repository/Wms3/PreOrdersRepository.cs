@@ -68,9 +68,9 @@ namespace Repository.Wms3
                                 CodigoMunicipo = string.Concat(
                                     pedidoDir.CodEstado,
                                     Const.GUION, 
-                                    pedidoDir.CodEstado),
+                                    pedidoDir.CodMunicipio),
                                 Zona = pedidoDir.Zona,
-                                Colonia = Const.EMPTY,
+                                Colonia = Const.EMPTY, 
                                 Latitude = auxiliar.GeoRefY,
                                 Longitude = auxiliar.GeoRefX,
                                 FechaEntrega = thisDay.Date.ToString(Const.FORMATDATE),

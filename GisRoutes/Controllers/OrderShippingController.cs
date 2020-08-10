@@ -59,6 +59,20 @@ namespace GisRoutes.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("get-orders-for-day-new")]
+        public async Task<ActionResult> GetOrdersShippingForDayNew(string date)
+        {
+            try
+            {
+                return Ok(await _shippingOrder.GetOrderShippingNew(DateTime.Parse(date)));
+            }
+            catch (FormatException)
+            {
+                return BadRequest();
+            }
+        }
+
         [HttpPost]
         [Route("save-delivery")]
         public async Task<IActionResult> SaveDelivery(DeliveryResultDto deliveryResult)
