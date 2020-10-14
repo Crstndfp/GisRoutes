@@ -27,6 +27,7 @@ namespace Assets.Utilities
         public const string STRECG = "EC-";
         public const string STRE = "E";
         public const string STRD = "D";
+        public const string STRC = "C";
         public const string STREC = "EC";
         public const string STRZ = "Z";
         public const string VEHICLEGISROUTES = "GISROUTES";
@@ -39,6 +40,8 @@ namespace Assets.Utilities
         public const string LATITUDE = "y";
         public const string LONGITUDE = "x";
         public const string GUATEMALA = "1";
+        public const string CODCHICAGO = "CH";
+        public const string CHICAGO = "chicago";
         public const int GETFIRST = 0;
         public const int ZERO = 0;
         public const int ONE = 1;
@@ -47,5 +50,6 @@ namespace Assets.Utilities
         public const int LIMITWITHOUTZONE = 146;
         public const int LIMITWITHZONE = 139;
         public const char PIPE = '|';
+        public const int SIZEDOC = 1;
     }
 }

@@ -24,13 +24,19 @@ namespace Repository.Wms3
             _context = context;
             _logger = logger; 
         }
+        /// <summary>
+        /// This method searches for orders by type of transport in the database.
+        /// </summary>
+        /// <param name="day">Day of find</param>
+        /// <param name="transport">Transport to find between gisroutes or chicago</param>
+        /// <returns>A list with all orders filtered by day and transport</returns>
         public async Task<IEnumerable<ShippingDto>> GetPreOrderShipping(
-            DateTime thisDay)
+            DateTime day, string transport)
         {
             try
             {
-                var query = from pedido in _context.TblPedido
-                            join pedidoDir in _context.TblDetPedidoDir
+                var query = from pedido in _context.TblPedido                                                       // table of the orders
+                            join pedidoDir in _context.TblDetPedidoDir                                              // table of addresses for the orders
                                 on new
                                 {
                                     pedido.NumDocumento,
@@ -41,14 +47,14 @@ namespace Repository.Wms3
                                     pedidoDir.NumDocumento,
                                     pedidoDir.CodTipo
                                 }
-                            join auxiliar in _context.ZtblAuxiliarGisroutes
+                            join auxiliar in _context.ZtblAuxiliarGisroutes                                         // table of the geolocdation points
                                 on pedidoDir.NumDocumento equals auxiliar.NumDocumento
-                            where DateTime.Compare(thisDay.Date, pedido.Fecha.Date) == Const.ZERO
-                                    && pedido.DocSap.Contains(Const.STRECG)
-                                    && pedidoDir.Tipo.Equals(Const.STRE)
-                                    && pedidoDir.Transporte.Equals(Const.STRD)
-                                    && !pedidoDir.Nombre.Substring(Const.ZERO,Const.SEVEN).Contains(Const.RETIRAR)
-                                    && !auxiliar.Estado.Equals(StateAuxiliarGisRoutes.READ)
+                            where DateTime.Compare(day.Date, pedido.Fecha.Date) == Const.ZERO                       // date of find
+                                    && pedido.DocSap.Contains(Const.STRECG)                                         // orders e-commerce
+                                    && pedidoDir.Tipo.Equals(Const.STRE)                                            // filter ordert with address
+                                    && pedidoDir.Transporte.Equals(transport)                                       // filter by transport gisroutes or chicago
+                                    && !pedidoDir.Nombre.Substring(Const.ZERO,Const.SEVEN).Contains(Const.RETIRAR)  // Quuit orders stored pickup 
+                                    && !auxiliar.Estado.Equals(StateAuxiliarGisRoutes.READ)                         // Orders no read
                             select new ShippingDto
                             {
                                 NoRegistro = pedido.DocSap,
@@ -73,7 +79,7 @@ namespace Repository.Wms3
                                 Colonia = Const.EMPTY, 
                                 Latitude = auxiliar.GeoRefY,
                                 Longitude = auxiliar.GeoRefX,
-                                FechaEntrega = thisDay.Date.ToString(Const.FORMATDATE),
+                                FechaEntrega = day.Date.ToString(Const.FORMATDATE),
                                 TotalPeso = Const.ZERO,
                                 TotalVolumen = Const.ZERO,
                                 CodigoRutaDespacho = Const.MISSING,

@@ -25,33 +25,18 @@ namespace GisRoutes.Controllers
         }
 
         [HttpGet]
-        [Route("get-orders-for-today")]
-        public async Task<ActionResult> GetOrdersShippingForToday()
-        {
-            return Ok(await _shippingOrder.GetOrderShipping(DateTime.Today));
-        }
-
-        [HttpGet]
         [Route("get-orders-for-day")]
-        public async Task<ActionResult> GetOrdersShippingForDay(string date)
+        public async Task<ActionResult> GetOrdersShippingForDay(string date, string company)
         {
             try
             {
-                return Ok(await _shippingOrder.GetOrderShipping(DateTime.Parse(date)));
-            }
-            catch (FormatException)
-            {
-                return BadRequest();
-            }
-        }
-
-        [HttpGet]
-        [Route("get-orders-today-new")]
-        public async Task<ActionResult> GetOrdersShippingForDayNew()
-        {
-            try
-            {
-                return Ok(await _shippingOrder.GetOrderShippingNew(DateTime.Today));
+                return Ok(
+                    await _shippingOrder.GetOrderShipping
+                    (
+                        DateTime.Parse(date),
+                        company.Trim().ToLower()
+                    )
+                    );
             }
             catch (FormatException)
             {
@@ -65,7 +50,7 @@ namespace GisRoutes.Controllers
         {
             try
             {
-                return Ok(await _shippingOrder.GetOrderShippingNew(DateTime.Parse(date)));
+                return Ok(await _shippingOrder.GetOrderShipping(DateTime.Parse(date), ""));
             }
             catch (FormatException)
             {
@@ -77,6 +62,10 @@ namespace GisRoutes.Controllers
         [Route("save-delivery")]
         public async Task<IActionResult> SaveDelivery(DeliveryResultDto deliveryResult)
         {
+            if (ModelState.IsValid)
+            {
+                return BadRequest("Error " + ModelState);
+            }
             string status = await _shippingOrder.SaveDelivery(deliveryResult);
             if (status.Equals("Success"))
             {

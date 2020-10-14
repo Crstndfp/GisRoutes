@@ -1,5 +1,4 @@
-﻿
-namespace Assets.Dto
+﻿namespace Assets.Dto
 {
     public class UserDataDto
     {

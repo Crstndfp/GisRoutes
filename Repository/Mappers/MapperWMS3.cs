@@ -25,5 +25,13 @@ namespace Repository.Mappers
                 GeoRefY = auxGisRoutesDto.GeoRefY
             };
         }
+        public static TransportDto Map(TblTransporte tblTransporte)
+        {
+            return new TransportDto
+            {
+                CodTransport = tblTransporte.CodTransporte,
+                Name = tblTransporte.Nombre
+            };
+        }
     }
 }

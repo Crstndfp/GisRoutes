@@ -15,5 +15,14 @@ namespace Repository.Mappers
             }
             return list;
         }
+        public static IEnumerable<TransportDto> MapList(IEnumerable<TblTransporte> listTblTransporte )
+        {
+            List<TransportDto> list = new List<TransportDto>();
+            foreach (TblTransporte tblTransporte in listTblTransporte)
+            {
+                list.Add(MapperWMS3.Map(tblTransporte));
+            }
+            return list;
+        }
     }
 }

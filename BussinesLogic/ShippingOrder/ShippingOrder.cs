@@ -8,6 +8,7 @@ using Assets.Utilities;
 using System.Threading.Tasks;
 using System.Linq;
 using BussinesLogic.Utilities;
+using Microsoft.AspNetCore.Server.IIS.Core;
 
 namespace BussinesLogic.ShippingOrder
 {
@@ -17,28 +18,61 @@ namespace BussinesLogic.ShippingOrder
         private readonly PreOrdersRepository preOrdersRepository;
         private readonly DepartmentRepository departmentRepository;
         private readonly FileRepository fileRepository;
+        private readonly TransportRepository transportRepository;
         public ShippingOrder
             (
             ShippingOrderRepository shippingOrderRepository,
             PreOrdersRepository preOrdersRepository,
             DepartmentRepository departmentRepository,
-            FileRepository fileRepository
+            FileRepository fileRepository,
+            TransportRepository transportRepository
             )
         {
             this.shippingOrderRepository = shippingOrderRepository;
             this.preOrdersRepository = preOrdersRepository;
             this.departmentRepository = departmentRepository;
             this.fileRepository = fileRepository;
+            this.transportRepository = transportRepository;
         }
-        public async Task<IEnumerable<ShippingDto>> GetOrderShippingNew(DateTime thisDay)
+        public async Task<IEnumerable<ShippingDto>> GetOrderShipping(DateTime day, string company)
+        {
+            // validate company request
+            bool isChicago = Const.CHICAGO.Equals(company);
+            if (isChicago)
+            {
+                return await GetOrdersLec(day, Const.STRC);
+            }
+            else
+            {
+                return await GetGisOrder(day);
+            } 
+
+        }
+        /// <summary>
+        /// Get orders the different transpot configured
+        /// </summary>
+        /// <param name="day"></param>
+        /// <param name="codTransport"></param>
+        /// <returns></returns>
+        private async Task<IEnumerable<ShippingDto>> GetOrdersLec(DateTime day, string codTransport)
+        {
+            IEnumerable<ShippingDto> listWithoutVerified 
+                = await preOrdersRepository.GetPreOrderShipping(day, codTransport);
+            return await UpdateGeolocation(listWithoutVerified);
+        }
+        /// <summary>
+        /// Get orders shipping for GisRoutes Cemaco
+        /// </summary>
+        /// <param name="day"></param>
+        /// <returns></returns>
+        private async Task<IEnumerable<ShippingDto>> GetGisOrder(DateTime day)
         {
             IEnumerable<ShippingDto> listVerified = new List<ShippingDto>();
             IEnumerable<ShippingDto> listWithoutVerified = new List<ShippingDto>();
-            IEnumerable<ShippingDto> listShippng = new List<ShippingDto>();
             Task<IEnumerable<ShippingDto>> taskVerified =
-                shippingOrderRepository.GetOrderShipping(thisDay);
+                shippingOrderRepository.GetOrderShipping(day);
             Task<IEnumerable<ShippingDto>> taskWithoutVerified =
-                preOrdersRepository.GetPreOrderShipping(thisDay);
+                preOrdersRepository.GetPreOrderShipping(day, Const.STRD);
             List<Task> shippingTask = new List<Task> { taskVerified, taskWithoutVerified };
             while (shippingTask.Count > 0)
             {
@@ -59,21 +93,75 @@ namespace BussinesLogic.ShippingOrder
             {
                 foreach (ShippingDto sd in listWithoutVerified)
                 {
-                    Task t = preOrdersRepository.UpdateAuxGisRoutes(sd.NumDocumento);
+                    Task`
                     t.Wait();
                 }
             }
             );*/
             // Elements no autorized
-
+            IEnumerable<ShippingDto> listShippng 
+                = UnionOrdersAndPreOrders(listVerified, listWithoutVerified);
+            return await UpdateGeolocation(listShippng);
+        }
+        public async Task<string> SaveDelivery(DeliveryResultDto deliveryResult)
+        {
+            bool exist = await this.shippingOrderRepository.FindShipping(deliveryResult);
+            if (exist)
+            {
+                return this.fileRepository.WriteDeliveryStatus(deliveryResult);
+            }
+            return "NoRegister not found";
+        }
+        /// <summary>
+        /// Search geolocation point (x, y) for orders
+        /// </summary>
+        /// <param name="listShippng">List of orders</param>
+        /// <returns>List wich points updated</returns>
+        private async Task<IEnumerable<ShippingDto>> UpdateGeolocation(IEnumerable<ShippingDto> listShippng)
+        {
+            foreach (ShippingDto s in listShippng)
+            {
+                string[] st = s.Direccion.Split(Const.PIPE);
+                AddressDto result = await departmentRepository.GetDepAndMun(
+                    s.CodigoMunicipo, st[Const.ZERO], s.Zona);
+                s.Direccion = StringTools.FixedAddress(result);
+                s.Notas = (st.Length > Const.ONE) ? StringTools.FixedAddress(st[Const.ONE]) : s.Notas;
+                if (s.Latitude.Equals(Const.ZERO) && s.Longitude.Equals(Const.ZERO))
+                {
+                    AddressTools addressTools = new AddressTools(s.Direccion);
+                    GeolocationDto geolocationDto = new GeolocationDto
+                    {
+                        Latitude = s.Latitude,
+                        Longitude = s.Longitude
+                    };
+                    geolocationDto = addressTools.UpdateCoordinates(geolocationDto);
+                    s.Latitude = geolocationDto.Latitude;
+                    s.Longitude = geolocationDto.Longitude;
+                }
+            }
+            return listShippng;
+        }
+        /// <summary>
+        /// Remove from the list of unverified orders the orders 
+        /// that exist within the list of verified orders 
+        /// and then join the lists
+        /// </summary>
+        /// <param name="listVerified">List of orders verified</param>
+        /// <param name="listWithoutVerified">List of orders not verified</param>
+        /// <returns>Unified list of unverified and verified orders</returns>
+        private IEnumerable<ShippingDto> UnionOrdersAndPreOrders(
+            IEnumerable<ShippingDto> listVerified, 
+            IEnumerable<ShippingDto> listWithoutVerified)
+        {
             if (listWithoutVerified != null)
             {
+                //Selection of all unconfirmed orders
                 IEnumerable<ShippingDto> rest
                 = from notConfirmed in listWithoutVerified
                   where !listVerified.Any(p => p.NoRegistro == notConfirmed.NoRegistro)
                   select notConfirmed;
 
-
+                //Union of confirmed items with unconfirmed item matches
                 var union =
                     from confirmed in listVerified
                     join notConfirmed in listWithoutVerified
@@ -105,70 +193,16 @@ namespace BussinesLogic.ShippingOrder
                         Notas = confirmed.Notas
                     };
                 // Combine list
-                listShippng = union.ToList().Concat(rest);
+                return union.ToList().Concat(rest);
             }
             else
             {
-                listShippng = listVerified;
+                return listVerified;
             }
-
-            
-            foreach (ShippingDto s in listShippng)
-            {
-                string[] st = s.Direccion.Split(Const.PIPE);
-                AddressDto result = await departmentRepository.GetDepAndMun(
-                    s.CodigoMunicipo, st[Const.ZERO], s.Zona);
-                s.Direccion = StringTools.FixedAddress(result);
-                s.Notas = (st.Length > Const.ONE) ? StringTools.FixedAddress(st[Const.ONE]) : s.Notas;
-                if (s.Latitude.Equals(Const.ZERO) && s.Longitude.Equals(Const.ZERO))
-                {
-                    AddressTools addressTools = new AddressTools(s.Direccion);
-                    GeolocationDto geolocationDto = new GeolocationDto
-                    {
-                        Latitude = s.Latitude,
-                        Longitude = s.Longitude
-                    };
-                    geolocationDto = addressTools.UpdateCoordinates(geolocationDto);
-                    s.Latitude = geolocationDto.Latitude;
-                    s.Longitude = geolocationDto.Longitude;
-                }
-            }
-            return listShippng;
         }
-        public async Task<IEnumerable<ShippingDto>> GetOrderShipping(DateTime thisDay)
+        public async Task<IEnumerable<TransportDto>> GetTransport()
         {
-            IEnumerable<ShippingDto> listShippng =
-                await shippingOrderRepository.GetOrderShipping(thisDay);
-            foreach (ShippingDto s in listShippng)
-            {
-                string[] st = s.Direccion.Split(Const.PIPE);
-                AddressDto result = await departmentRepository.GetDepAndMun(
-                    s.CodigoMunicipo, st[Const.ZERO], s.Zona);
-                s.Direccion = StringTools.FixedAddress(result);
-                s.Notas = (st.Length > Const.ONE) ? StringTools.FixedAddress(st[Const.ONE]) : s.Notas;
-                if (s.Latitude.Equals(Const.ZERO) && s.Longitude.Equals(Const.ZERO))
-                {
-                    AddressTools addressTools = new AddressTools(s.Direccion);
-                    GeolocationDto geolocationDto = new GeolocationDto
-                    {
-                        Latitude = s.Latitude,
-                        Longitude = s.Longitude
-                    };
-                    geolocationDto = addressTools.UpdateCoordinates(geolocationDto);
-                    s.Latitude = geolocationDto.Latitude;
-                    s.Longitude = geolocationDto.Longitude;
-                }
-            }
-            return listShippng;
-        }
-        public async Task<string> SaveDelivery(DeliveryResultDto deliveryResult)
-        {
-            bool exist = await this.shippingOrderRepository.FindShipping(deliveryResult);
-            if (exist)
-            {
-                return this.fileRepository.WriteDeliveryStatus(deliveryResult);
-            }
-            return "NoRegister not found";
+            return await this.transportRepository.GetTransport();
         }
     }
 }

@@ -24,7 +24,7 @@ namespace Repository.DomCemaco
             _context = context;
             _logger = logger;
         }
-        public async Task<IEnumerable<ShippingDto>> GetOrderShipping(DateTime thisDay)
+        public async Task<IEnumerable<ShippingDto>> GetOrderShipping(DateTime day)
         {
             try
             {
@@ -39,7 +39,7 @@ namespace Repository.DomCemaco
                             join evento in _context.TblEvento
                                 on envio.IdEvento equals evento.IdEvento into ev
                             from subEnvento in ev.DefaultIfEmpty()
-                            where DateTime.Compare(thisDay.Date, ruta.Fecha.Date) == Const.ZERO
+                            where DateTime.Compare(day.Date, ruta.Fecha.Date) == Const.ZERO
                                 && (!detRuta.Status.Equals(Const.STRE) 
                                     || !detRuta.Status.Equals(Const.STRZ))
                                 && ruta.NumVehiculo.Equals(Const.VEHICLEGISROUTES)
@@ -88,7 +88,7 @@ namespace Repository.DomCemaco
                                             ? subEnvento.GeoRefY : subEnvioDir.GeoRefY,
                                 Longitude = (envio.Tipo == Const.INTWEDDING)
                                             ? subEnvento.GeoRefX : subEnvioDir.GeoRefX,
-                                FechaEntrega = thisDay.Date.ToString(Const.FORMATDATE),
+                                FechaEntrega = day.Date.ToString(Const.FORMATDATE),
                                 TotalPeso = Const.ZERO,
                                 TotalVolumen = Const.ZERO,
                                 CodigoRutaDespacho = detRuta.IdRuta,
