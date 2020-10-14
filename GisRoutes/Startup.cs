@@ -77,6 +77,7 @@ namespace GisRoutes
             services.AddScoped<FileRepository, FileRepository>(); //validar carga
             services.AddScoped<UpdateCoordinatesRepository, UpdateCoordinatesRepository>();
             services.AddScoped<UpdatePreOrderRepository, UpdatePreOrderRepository>();
+            services.AddScoped<TransportRepository, TransportRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
