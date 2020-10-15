@@ -1,7 +1,7 @@
 ﻿using Assets.Dto;
 using Microsoft.Extensions.Configuration;
 
-namespace BussinesLogic.Authentication
+namespace BussinesLogic.Utilities
 {
     public class ReadAppSettings
     {
@@ -24,6 +24,11 @@ namespace BussinesLogic.Authentication
             UserGisRoutesDto userGisRoutes = new UserGisRoutesDto();
             this.configuration.GetSection(UserGisRoutesDto.name).Bind(userGisRoutes);
             return userGisRoutes;
-        } 
+        }
+
+        public string GetPathFolder()
+        {
+            return this.configuration.GetSection("FolderSaveDelivery").GetValue<string>("Path");
+        }
     }
 }

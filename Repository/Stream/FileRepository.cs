@@ -13,7 +13,7 @@ namespace Repository.Stream
         {
             _logger = logger;
         }
-        public string WriteDeliveryStatus(DeliveryResultDto deliveryResult)
+        public string WriteDeliveryStatus(DeliveryResultDto deliveryResult, string folder)
         {
             string data = string.Empty;
             
@@ -27,9 +27,9 @@ namespace Repository.Stream
             data = StringTools.AppendDataArray(data, deliveryResult.Fecha.ToString(Const.USEDATE), 58, -1);
             try
             {
-                if (Directory.Exists(Const.FILESERVER))
+                if (Directory.Exists(folder))
                 {
-                    string path = Const.FILESERVER + @"\" +
+                    string path = folder + @"\" +
                         StringTools.FileManeDelivery(deliveryResult.Fecha, deliveryResult.NoRegistro) +
                         ".txt";
                     _logger.LogInformation("Path " + path);

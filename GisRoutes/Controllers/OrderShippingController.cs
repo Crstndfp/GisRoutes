@@ -62,7 +62,7 @@ namespace GisRoutes.Controllers
         [Route("save-delivery")]
         public async Task<IActionResult> SaveDelivery(DeliveryResultDto deliveryResult)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest("Error " + ModelState);
             }

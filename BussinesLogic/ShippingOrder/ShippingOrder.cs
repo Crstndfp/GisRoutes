@@ -8,7 +8,6 @@ using Assets.Utilities;
 using System.Threading.Tasks;
 using System.Linq;
 using BussinesLogic.Utilities;
-using Microsoft.AspNetCore.Server.IIS.Core;
 
 namespace BussinesLogic.ShippingOrder
 {
@@ -19,13 +18,16 @@ namespace BussinesLogic.ShippingOrder
         private readonly DepartmentRepository departmentRepository;
         private readonly FileRepository fileRepository;
         private readonly TransportRepository transportRepository;
+        private readonly ReadAppSettings readAppSettings;
+
         public ShippingOrder
             (
             ShippingOrderRepository shippingOrderRepository,
             PreOrdersRepository preOrdersRepository,
             DepartmentRepository departmentRepository,
             FileRepository fileRepository,
-            TransportRepository transportRepository
+            TransportRepository transportRepository,
+            ReadAppSettings readAppSettings
             )
         {
             this.shippingOrderRepository = shippingOrderRepository;
@@ -33,6 +35,7 @@ namespace BussinesLogic.ShippingOrder
             this.departmentRepository = departmentRepository;
             this.fileRepository = fileRepository;
             this.transportRepository = transportRepository;
+            this.readAppSettings = readAppSettings;
         }
         public async Task<IEnumerable<ShippingDto>> GetOrderShipping(DateTime day, string company)
         {
@@ -106,9 +109,10 @@ namespace BussinesLogic.ShippingOrder
         public async Task<string> SaveDelivery(DeliveryResultDto deliveryResult)
         {
             bool exist = await this.shippingOrderRepository.FindShipping(deliveryResult);
-            if (exist)
+            string path = readAppSettings.GetPathFolder();
+            if (exist && (path != null || path != "" ))
             {
-                return this.fileRepository.WriteDeliveryStatus(deliveryResult);
+                return this.fileRepository.WriteDeliveryStatus(deliveryResult, path);
             }
             return "NoRegister not found";
         }
