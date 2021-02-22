@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using Repository.DomCemaco;
-using Repository.Wms3;
 using Repository.Stream;
 using Assets.Dto;
 using Assets.Utilities;
 using System.Threading.Tasks;
 using System.Linq;
 using BussinesLogic.Utilities;
+using Repository.DomCemaco;
+using Repository.Wms3;
 
 namespace BussinesLogic.ShippingOrder
 {
@@ -39,15 +39,13 @@ namespace BussinesLogic.ShippingOrder
         }
         public async Task<IEnumerable<ShippingDto>> GetOrderShipping(DateTime day, string company)
         {
-            // validate company request
-            bool isChicago = Const.CHICAGO.Equals(company);
-            if (isChicago)
+            if ( company.Equals(Const.STRD) )
             {
-                return await GetOrdersLec(day, Const.STRC);
+                return await GetGisOrder(day);
             }
             else
             {
-                return await GetGisOrder(day);
+                return await GetOrdersLec(day, company);
             } 
 
         }
@@ -125,20 +123,29 @@ namespace BussinesLogic.ShippingOrder
         {
             foreach (ShippingDto s in listShippng)
             {
+                string cods = s.CodigoMunicipo ?? null;
+                s.Direccion ??= "";
                 string[] st = s.Direccion.Split(Const.PIPE);
-                AddressDto result = await departmentRepository.GetDepAndMun(
-                    s.CodigoMunicipo, st[Const.ZERO], s.Zona);
-                s.Direccion = StringTools.FixedAddress(result);
-                s.Notas = (st.Length > Const.ONE) ? StringTools.FixedAddress(st[Const.ONE]) : s.Notas;
-                if (s.Latitude.Equals(Const.ZERO) && s.Longitude.Equals(Const.ZERO))
+                s.Direccion = StringTools.FixedAddress(st[Const.ZERO]);
+                s.Notas = (st.Length > Const.ONE)
+                        ? StringTools.FixedAddress(st[Const.ONE])
+                        : s.Notas;
+                if (s.Latitude.Equals(Const.ZERO) 
+                    && s.Longitude.Equals(Const.ZERO)
+                    && cods != null
+                    )
                 {
+                    //get addres to find
+                    AddressDto result = await departmentRepository.GetDepAndMun(
+                        cods, 
+                        st[Const.ZERO],
+                        s.Zona??"SZ"
+                    );
+                    s.Direccion = StringTools.FixedAddress(result);
+                    // update geolocation
                     AddressTools addressTools = new AddressTools(s.Direccion);
-                    GeolocationDto geolocationDto = new GeolocationDto
-                    {
-                        Latitude = s.Latitude,
-                        Longitude = s.Longitude
-                    };
-                    geolocationDto = addressTools.UpdateCoordinates(geolocationDto);
+                    GeolocationDto geolocationDto =
+                         addressTools.UpdateCoordinates();
                     s.Latitude = geolocationDto.Latitude;
                     s.Longitude = geolocationDto.Longitude;
                 }
@@ -204,6 +211,10 @@ namespace BussinesLogic.ShippingOrder
                 return listVerified;
             }
         }
+        /// <summary>
+        /// List of transports definied for Cemaco 
+        /// </summary>
+        /// <returns></returns>
         public async Task<IEnumerable<TransportDto>> GetTransport()
         {
             return await this.transportRepository.GetTransport();

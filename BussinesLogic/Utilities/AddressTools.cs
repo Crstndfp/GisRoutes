@@ -20,15 +20,22 @@ namespace BussinesLogic.Utilities
             ClientGisRoutes clientGisRoutes = new ClientGisRoutes();
             return clientGisRoutes.getGeolocationByAddress(this.address);
         }
-        public GeolocationDto UpdateCoordinates(GeolocationDto geolocation)
+        public GeolocationDto UpdateCoordinates()
         {
+            GeolocationDto geolocation = new GeolocationDto();
             JObject rest = RequestGisRoutes();
-            geolocation.Latitude = (rest == null)
-                ? geolocation.Latitude
-                : (double)rest[Const.CANDIDATES][Const.GETFIRST][Const.LOCATION][Const.LATITUDE];
-            geolocation.Longitude = rest != null
-                ? (double)rest[Const.CANDIDATES][Const.GETFIRST][Const.LOCATION][Const.LONGITUDE]
-                : geolocation.Longitude;
+            if (rest == null)
+            {
+                geolocation.Latitude = Const.ZERO;
+                geolocation.Longitude = Const.ZERO;
+            }
+            else
+            {
+                geolocation.Latitude =
+                    (double)rest[Const.CANDIDATES][Const.GETFIRST][Const.LOCATION][Const.LATITUDE];
+                geolocation.Longitude =
+                    (double)rest[Const.CANDIDATES][Const.GETFIRST][Const.LOCATION][Const.LONGITUDE];
+            }
             return geolocation;
         }
     }

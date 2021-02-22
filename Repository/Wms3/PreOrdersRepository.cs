@@ -49,8 +49,20 @@ namespace Repository.Wms3
                                 }
                             join auxiliar in _context.ZtblAuxiliarGisroutes                                         // table of the geolocdation points
                                 on pedidoDir.NumDocumento equals auxiliar.NumDocumento
-                            where DateTime.Compare(day.Date, pedido.Fecha.Date) == Const.ZERO                       // date of find
-                                    && pedido.DocSap.Contains(Const.STRECG)                                         // orders e-commerce
+                            where (DateTime.Compare(day.AddDays(-30).Date, pedido.Fecha.Date) < Const.ZERO                       // date of find
+                                    || DateTime.Compare(day.Date, pedido.Fecha.Date) == Const.ZERO)
+                                    && (
+                                        pedido.Status.Equals("A") ||
+                                        pedido.Status.Equals("D") ||
+                                        pedido.Status.Equals("C") ||
+                                        pedido.Status.Equals("O") ||
+                                        pedido.Status.Equals("K") ||
+                                        pedido.Status.Equals("F") ||
+                                        pedido.Status.Equals("0") ||
+                                        pedido.Status.Equals("Q") ||
+                                        pedido.Status.Equals("R") ||
+                                        pedido.Status.Equals("P")
+                                    )
                                     && pedidoDir.Tipo.Equals(Const.STRE)                                            // filter ordert with address
                                     && pedidoDir.Transporte.Equals(transport)                                       // filter by transport gisroutes or chicago
                                     && !pedidoDir.Nombre.Substring(Const.ZERO,Const.SEVEN).Contains(Const.RETIRAR)  // Quuit orders stored pickup 

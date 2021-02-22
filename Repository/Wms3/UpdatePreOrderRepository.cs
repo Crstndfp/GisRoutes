@@ -7,7 +7,6 @@ using Models.Assets;
 using Assets.Dto;
 using Microsoft.EntityFrameworkCore;
 using System;
-using Repository.Mappers;
 using Assets.Utilities;
 
 namespace Repository.Wms3
@@ -36,7 +35,6 @@ namespace Repository.Wms3
                                 on aux.NumDocumento equals pedidoDir.NumDocumento
                             where aux.Estado.Equals(StateAuxiliarGisRoutes.JOINED)
                              && pedidoDir.Tipo.Equals(Const.STRE)
-                             && pedidoDir.Transporte.Equals(Const.STRD)
                             select new AuxGisRoutesDto
                             {
                                 NumDocumento = pedidoDir.NumDocumento,
@@ -56,14 +54,18 @@ namespace Repository.Wms3
                 return new List<AuxGisRoutesDto>();
             }
         }
-        public void UpdateAuxiliarGisroutes(AuxGisRoutesDto auxGisRoutesDto)
+        public async Task UpdateAuxiliarGisroutes(AuxGisRoutesDto auxGisRoutesDto)
         {
-            ZtblAuxiliarGisroutes ztblAuxiliarGisroutes = MapperWMS3.Map(auxGisRoutesDto);
             try
             {
+                ZtblAuxiliarGisroutes ztblAuxiliarGisroutes = await _context.ZtblAuxiliarGisroutes
+                    .Where(zg => zg.NumDocumento == auxGisRoutesDto.NumDocumento)
+                    .FirstOrDefaultAsync();
+                ztblAuxiliarGisroutes.GeoRefX = auxGisRoutesDto.GeoRefX;
+                ztblAuxiliarGisroutes.GeoRefY = auxGisRoutesDto.GeoRefY;
                 ztblAuxiliarGisroutes.Estado = StateAuxiliarGisRoutes.UPDATED;
                 _context.ZtblAuxiliarGisroutes.Update(ztblAuxiliarGisroutes);
-                _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
             }
             catch (Exception e)
             {

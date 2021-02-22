@@ -16,10 +16,11 @@
     },
     "GisRoutes": {
       "commandName": "IISExpress",
-      "use64Bit": true,
+      "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "use64Bit": true
     }
   }
 }

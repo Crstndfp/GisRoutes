@@ -34,8 +34,7 @@ namespace Repository.DomCemaco
                             join envioDir in _context.TblEnvioDir
                                 on envio.IdEnvio equals envioDir.IdEnvio
                             where
-                                DateTime.Compare(today.AddHours(-Const.ONE).AddMinutes(-today.Minute), envio.Fecha) < Const.ZERO
-                                && DateTime.Compare(today.AddMinutes(-today.Minute), envio.Fecha) > Const.ZERO
+                                DateTime.Compare(today.AddDays(-10).Date, envio.Fecha.Date) < Const.ZERO
                                 && envioDir.GeoRefX.Equals(Const.ZERO) && envioDir.GeoRefY.Equals(Const.ZERO)
                             select envioDir;
                 return MapperListDomCemaco.MapList(await query.ToListAsync());
@@ -56,8 +55,7 @@ namespace Repository.DomCemaco
                             join evento in _context.TblEvento
                                 on envio.IdEvento equals evento.IdEvento
                             where
-                                DateTime.Compare(today.AddHours(-Const.ONE).AddMinutes(-today.Minute), envio.Fecha) < Const.ZERO
-                                && DateTime.Compare(today.AddMinutes(-today.Minute), envio.Fecha) > Const.ZERO
+                                DateTime.Compare(today.AddDays(-10).Date, envio.Fecha.Date) < Const.ZERO
                                 && evento.GeoRefX.Equals(Const.ZERO) && evento.GeoRefY.Equals(Const.ZERO)
                             select evento;
                 return MapperListDomCemaco.MapList(await query.ToListAsync());
@@ -69,26 +67,34 @@ namespace Repository.DomCemaco
             }
             
         }
-        public void UpdateTblEnvioDir(TableShippingDirDto tableShippingDirDto)
+        public async Task UpdateTblEnvioDir(TableShippingDirDto tableShippingDirDto)
         {
-            TblEnvioDir tblEnvioDir = MapperDomCemaco.Map(tableShippingDirDto);
             try
             {
+                TblEnvioDir tblEnvioDir = await _context.TblEnvioDir
+                    .Where(ed => ed.IdEnvio == tableShippingDirDto.IdEnvio)
+                    .FirstOrDefaultAsync();
+                tblEnvioDir.GeoRefY = tableShippingDirDto.GeoRefY;
+                tblEnvioDir.GeoRefX = tableShippingDirDto.GeoRefX;
                 _context.TblEnvioDir.Update(tblEnvioDir);
-                _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
             }
             catch (DbUpdateException e)
             {
                 _logger.LogError(e.Message, e.StackTrace);
             }
         }
-        public void UpdateTblEvento(TableEventDto tableEventDto)
+        public async Task UpdateTblEvento(TableEventDto tableEventDto)
         {
-            TblEvento tblEvento = MapperDomCemaco.Map(tableEventDto);
             try
             {
+                TblEvento tblEvento = await _context.TblEvento
+                    .Where(ev => ev.IdEvento == tableEventDto.IdEvento)
+                    .FirstOrDefaultAsync();
+                tblEvento.GeoRefX = tableEventDto.GeoRefX;
+                tblEvento.GeoRefY = tableEventDto.GeoRefY;
                 _context.TblEvento.Update(tblEvento);
-                _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
             }
             catch (DbUpdateException e)
             {

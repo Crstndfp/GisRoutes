@@ -74,8 +74,8 @@ namespace Repository.DomCemaco
                 {
                     street = street,
                     Zone = zone,
-                    township = Const.EMPTY,
-                    department = Const.EMPTY
+                    township = "GUATEMALA",
+                    department = "GUATEMALA"
                 };
             }
 

@@ -21,7 +21,26 @@ namespace GisRoutes.Controllers
             _authService = authService;
         }
 
+        /// <summary>
+        /// Get an authentication token
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /token
+        ///     {
+        ///          "UserName":"admin",
+        ///          "Password":"1234"
+        ///     }
+        ///
+        /// </remarks>
+        /// <param name="userData"></param>
+        /// <returns>string</returns>
+        /// <response code="200">Return key of authentication</response>
+        /// <response code="401">Credentials not found</response>  
         [HttpPost("token")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public IActionResult Token([FromBody] UserDataDto userData)
         {
             if (_authService.ValidateLogin(userData))
