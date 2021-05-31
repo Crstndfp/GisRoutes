@@ -25,7 +25,7 @@ namespace Repository.Wms3
             _context = context;
             _logger = logger; ;
         }
-        public async Task<IEnumerable<AuxGisRoutesDto>> GetListAuxiliarGisRoutes()
+        public IEnumerable<AuxGisRoutesDto> GetListAuxiliarGisRoutes()
         {
             try
             {
@@ -40,13 +40,13 @@ namespace Repository.Wms3
                                 NumDocumento = pedidoDir.NumDocumento,
                                 Estado = aux.Estado,
                                 Direccion = pedidoDir.Direccion,
-                                CodDepartamento = byte.Parse( pedidoDir.CodEstado.Equals("") ? Const.GUATEMALA : pedidoDir.CodEstado),
+                                CodDepartamento = byte.Parse(pedidoDir.CodEstado.Equals("") ? Const.GUATEMALA : pedidoDir.CodEstado),
                                 CodMunicipio = byte.Parse(pedidoDir.CodMunicipio.Equals("") ? Const.GUATEMALA : pedidoDir.CodMunicipio),
                                 GeoRefX = aux.GeoRefX,
                                 GeoRefY = aux.GeoRefY,
                                 Zona = pedidoDir.Zona
                             };
-                return await query.ToListAsync();
+                return query.ToList();
             }
             catch (Exception e)
             {
@@ -54,18 +54,18 @@ namespace Repository.Wms3
                 return new List<AuxGisRoutesDto>();
             }
         }
-        public async Task UpdateAuxiliarGisroutes(AuxGisRoutesDto auxGisRoutesDto)
+        public void UpdateAuxiliarGisroutes(AuxGisRoutesDto auxGisRoutesDto)
         {
             try
             {
-                ZtblAuxiliarGisroutes ztblAuxiliarGisroutes = await _context.ZtblAuxiliarGisroutes
+                ZtblAuxiliarGisroutes ztblAuxiliarGisroutes = _context.ZtblAuxiliarGisroutes
                     .Where(zg => zg.NumDocumento == auxGisRoutesDto.NumDocumento)
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefault();
                 ztblAuxiliarGisroutes.GeoRefX = auxGisRoutesDto.GeoRefX;
                 ztblAuxiliarGisroutes.GeoRefY = auxGisRoutesDto.GeoRefY;
                 ztblAuxiliarGisroutes.Estado = StateAuxiliarGisRoutes.UPDATED;
                 _context.ZtblAuxiliarGisroutes.Update(ztblAuxiliarGisroutes);
-                await _context.SaveChangesAsync();
+                _context.SaveChanges();
             }
             catch (Exception e)
             {

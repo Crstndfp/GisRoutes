@@ -11,14 +11,14 @@ namespace BussinesLogic.Utilities
         private readonly string address;
 
         public AddressTools(
-            string addrerss)
+            string address)
         {
-            this.address = addrerss;
+            this.address = address;
         }
         private JObject RequestGisRoutes()
         {
             ClientGisRoutes clientGisRoutes = new ClientGisRoutes();
-            return clientGisRoutes.getGeolocationByAddress(this.address);
+            return clientGisRoutes.getGeolocationByAddress(address);
         }
         public GeolocationDto UpdateCoordinates()
         {

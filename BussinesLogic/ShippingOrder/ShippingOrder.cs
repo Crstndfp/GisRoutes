@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using Repository.Stream;
-using Assets.Dto;
+﻿using Assets.Dto;
 using Assets.Utilities;
-using System.Threading.Tasks;
-using System.Linq;
 using BussinesLogic.Utilities;
 using Repository.DomCemaco;
+using Repository.Stream;
 using Repository.Wms3;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BussinesLogic.ShippingOrder
 {
@@ -37,18 +37,19 @@ namespace BussinesLogic.ShippingOrder
             this.transportRepository = transportRepository;
             this.readAppSettings = readAppSettings;
         }
+
         public async Task<IEnumerable<ShippingDto>> GetOrderShipping(DateTime day, string company)
         {
-            if ( company.Equals(Const.STRD) )
+            if (company.Equals(Const.STRD))
             {
                 return await GetGisOrder(day);
             }
             else
             {
                 return await GetOrdersLec(day, company);
-            } 
-
+            }
         }
+
         /// <summary>
         /// Get orders the different transpot configured
         /// </summary>
@@ -57,10 +58,11 @@ namespace BussinesLogic.ShippingOrder
         /// <returns></returns>
         private async Task<IEnumerable<ShippingDto>> GetOrdersLec(DateTime day, string codTransport)
         {
-            IEnumerable<ShippingDto> listWithoutVerified 
+            IEnumerable<ShippingDto> listWithoutVerified
                 = await preOrdersRepository.GetPreOrderShipping(day, codTransport);
-            return await UpdateGeolocation(listWithoutVerified);
+            return UpdateGeolocation(listWithoutVerified);
         }
+
         /// <summary>
         /// Get orders shipping for GisRoutes Cemaco
         /// </summary>
@@ -88,7 +90,6 @@ namespace BussinesLogic.ShippingOrder
                     listWithoutVerified = taskWithoutVerified.Result;
                     shippingTask.Remove(taskWithoutVerified);
                 }
-                
             }
             /*Parallel.Invoke(() =>
             {
@@ -100,68 +101,78 @@ namespace BussinesLogic.ShippingOrder
             }
             );*/
             // Elements no autorized
-            IEnumerable<ShippingDto> listShippng 
+            IEnumerable<ShippingDto> listShippng
                 = UnionOrdersAndPreOrders(listVerified, listWithoutVerified);
-            return await UpdateGeolocation(listShippng);
+            return UpdateGeolocation(listShippng);
         }
+
         public async Task<string> SaveDelivery(DeliveryResultDto deliveryResult)
         {
             bool exist = await this.shippingOrderRepository.FindShipping(deliveryResult);
             string path = readAppSettings.GetPathFolder();
-            if (exist && (path != null || path != "" ))
+            if (exist && (path != null || path != ""))
             {
                 return this.fileRepository.WriteDeliveryStatus(deliveryResult, path);
             }
             return "NoRegister not found";
         }
+
         /// <summary>
         /// Search geolocation point (x, y) for orders
         /// </summary>
         /// <param name="listShippng">List of orders</param>
         /// <returns>List wich points updated</returns>
-        private async Task<IEnumerable<ShippingDto>> UpdateGeolocation(IEnumerable<ShippingDto> listShippng)
+        private IEnumerable<ShippingDto> UpdateGeolocation(IEnumerable<ShippingDto> listShippng)
         {
             foreach (ShippingDto s in listShippng)
             {
-                string cods = s.CodigoMunicipo ?? null;
-                s.Direccion ??= "";
-                string[] st = s.Direccion.Split(Const.PIPE);
-                s.Direccion = StringTools.FixedAddress(st[Const.ZERO]);
-                s.Notas = (st.Length > Const.ONE)
-                        ? StringTools.FixedAddress(st[Const.ONE])
-                        : s.Notas;
-                if (s.Latitude.Equals(Const.ZERO) 
-                    && s.Longitude.Equals(Const.ZERO)
-                    && cods != null
-                    )
+                try
                 {
-                    //get addres to find
-                    AddressDto result = await departmentRepository.GetDepAndMun(
-                        cods, 
-                        st[Const.ZERO],
-                        s.Zona??"SZ"
-                    );
-                    s.Direccion = StringTools.FixedAddress(result);
-                    // update geolocation
-                    AddressTools addressTools = new AddressTools(s.Direccion);
-                    GeolocationDto geolocationDto =
-                         addressTools.UpdateCoordinates();
-                    s.Latitude = geolocationDto.Latitude;
-                    s.Longitude = geolocationDto.Longitude;
+                    string cods = s.CodigoMunicipo ?? null;
+                    s.Direccion ??= "";
+                    string[] st = s.Direccion.Split(Const.PIPE);
+                    s.Direccion = StringTools.FixedAddress(st[Const.ZERO]);
+                    s.Notas = (st.Length > Const.ONE)
+                            ? StringTools.FixedAddress(st[Const.ONE])
+                            : s.Notas;
+                    if (s.Latitude.Equals(Const.ZERO)
+                        && s.Longitude.Equals(Const.ZERO)
+                        && cods != null
+                        )
+                    {
+                        //get addres to find
+                        AddressDto result = departmentRepository.GetDepAndMun(
+                            cods,
+                            st[Const.ZERO],
+                            s.Zona ?? "SZ"
+                        );
+                        s.Direccion = StringTools.FixedAddress(result);
+                        // update geolocation
+                        AddressTools addressTools = new AddressTools(s.Direccion);
+                        GeolocationDto geolocationDto =
+                             addressTools.UpdateCoordinates();
+                        s.Latitude = geolocationDto.Latitude;
+                        s.Longitude = geolocationDto.Longitude;
+                    }
+                }
+                catch (Exception)
+                {
+                    s.Latitude = Const.ZERO;
+                    s.Longitude = Const.ZERO;
                 }
             }
             return listShippng;
         }
+
         /// <summary>
-        /// Remove from the list of unverified orders the orders 
-        /// that exist within the list of verified orders 
-        /// and then join the lists
+        /// Remove from the list of unverified orders the orders that exist within the list of
+        /// verified orders and then join the lists
         /// </summary>
         /// <param name="listVerified">List of orders verified</param>
         /// <param name="listWithoutVerified">List of orders not verified</param>
         /// <returns>Unified list of unverified and verified orders</returns>
         private IEnumerable<ShippingDto> UnionOrdersAndPreOrders(
-            IEnumerable<ShippingDto> listVerified, 
+            IEnumerable<ShippingDto> listVerified,
             IEnumerable<ShippingDto> listWithoutVerified)
         {
             if (listWithoutVerified != null)
@@ -211,8 +222,9 @@ namespace BussinesLogic.ShippingOrder
                 return listVerified;
             }
         }
+
         /// <summary>
-        /// List of transports definied for Cemaco 
+        /// List of transports definied for Cemaco
         /// </summary>
         /// <returns></returns>
         public async Task<IEnumerable<TransportDto>> GetTransport()

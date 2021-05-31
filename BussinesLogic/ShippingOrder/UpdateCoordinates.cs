@@ -1,178 +1,153 @@
 ﻿using Assets.Dto;
 using Assets.Utilities;
 using BussinesLogic.Utilities;
+using Microsoft.Extensions.Logging;
 using Repository.DomCemaco;
 using Repository.Wms3;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace BussinesLogic.ShippingOrder
 {
     public class UpdateCoordinates
     {
-        private readonly DepartmentRepository departmentEnviosRepository;
-        private readonly DepartmentRepository departmentEventRepository;
-        private readonly DepartmentRepository departmentLecRepository;
+        private readonly DepartmentRepositoryLec departmentRepositoryLec;
         private readonly UpdateCoordinatesRepository updateCoordinatesEnvioService;
-        private readonly UpdateCoordinatesRepository updateCoordinatesEventoService;
         private readonly UpdatePreOrderRepository updatePreOrderRepository;
+        private readonly ILogger _logger;
+
         public UpdateCoordinates
             (
-            DepartmentRepository departmentEnviosRepository,
-            DepartmentRepository departmentEventRepository,
-            DepartmentRepository departmentLecRepository,
+            DepartmentRepositoryLec departmentRepositoryLec,
             UpdateCoordinatesRepository updateCoordinatesEnvioService,
-            UpdateCoordinatesRepository updateCoordinatesEventoService,
-            UpdatePreOrderRepository updatePreOrderRepository
+            UpdatePreOrderRepository updatePreOrderRepository,
+            ILogger<UpdateCoordinates> logger
             )
         {
-            this.departmentEnviosRepository = departmentEnviosRepository;
-            this.departmentEventRepository = departmentEventRepository;
-            this.departmentLecRepository = departmentLecRepository;
+            this.departmentRepositoryLec = departmentRepositoryLec;
             this.updateCoordinatesEnvioService = updateCoordinatesEnvioService;
-            this.updateCoordinatesEventoService = updateCoordinatesEventoService;
             this.updatePreOrderRepository = updatePreOrderRepository;
+            _logger = logger;
         }
-        public async Task UpdateCoordinatesAll()
-        {
-            Task shippingTask = UpdateCoordinatesEnvioDir();
-            Task eventTask = UpdateCoordinatesEnvento();
-            Task preOrderTask = UpdateCoordinatesPreOrden();
-            List<Task> updateTask = new List<Task>
-            {
-                shippingTask,
-                eventTask,
-                preOrderTask
-            };
-            while (updateTask.Count > 0)
-            {
-                Task finishedTask = await Task.WhenAny(updateTask);
-                if (finishedTask == shippingTask)
-                {
-                    updateTask.Remove(shippingTask);
-                }
-                else if (finishedTask == eventTask)
-                {
-                    updateTask.Remove(eventTask);
-                }
-                else if (finishedTask == preOrderTask)
-                {
-                    updateTask.Remove(preOrderTask);
-                }
-            }
-        }
-        public async Task UpdateCoordinatesEnvioDir()
+
+        public void UpdateCoordinatesEnvioDir()
         {
             IEnumerable<TableShippingDirDto> list
-                = await updateCoordinatesEnvioService.GetTblenvioDirToday();
+                = updateCoordinatesEnvioService.GetTblenvioDirToday();
 
             foreach (TableShippingDirDto t in list)
             {
                 if (t.Direccion != null)
                 {
-                    string[] st = t.Direccion.Split(Const.PIPE);
-                    GeolocationDto geolocationDto =
-                        await GetGeolocation(
-                                t.CodDepartamento,
-                                t.CodMunicipio,
-                                st[0],
-                                t.Zona,
-                                departmentEnviosRepository
-                            );
-                    t.GeoRefY = geolocationDto.Latitude;
-                    t.GeoRefX = geolocationDto.Longitude;
-                    await updateCoordinatesEnvioService.UpdateTblEnvioDir(t);
+                    try
+                    {
+                        string[] st = t.Direccion.Split(Const.PIPE);
+                        GeolocationDto geolocationDto =
+                            GetGeolocation(
+                                    t.CodDepartamento,
+                                    t.CodMunicipio,
+                                    st[0],
+                                    t.Zona
+                                );
+                        t.GeoRefY = geolocationDto.Latitude;
+                        t.GeoRefX = geolocationDto.Longitude;
+                        updateCoordinatesEnvioService.UpdateTblEnvioDir(t);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e.Message);
+                    }
                 }
             }
         }
-        public async Task UpdateCoordinatesEnvento()
+
+        public void UpdateCoordinatesEnvento()
         {
             IEnumerable<TableEventDto> list =
-                await updateCoordinatesEventoService.GetTblEventosToday();
+                updateCoordinatesEnvioService.GetTblEventosToday();
             foreach (TableEventDto t in list)
             {
                 byte codDep = t.CodDepartamento ?? 0;
                 byte codMun = t.CodMunicipio ?? 0;
-                if (t.Direccion != null 
-                    && codDep > 0 
+                if (t.Direccion != null
+                    && codDep > 0
                     && codMun > 0
                     )
                 {
-                    string[] st = t.Direccion.Split(Const.PIPE);
-                    GeolocationDto geolocationDto =
-                        await GetGeolocation(
-                                codDep,
-                                codMun,
-                                st[0],
-                                t.Zona,
-                                departmentEventRepository
-                            );
-                    t.GeoRefY = geolocationDto.Latitude;
-                    t.GeoRefX = geolocationDto.Longitude;
-                    await updateCoordinatesEventoService.UpdateTblEvento(t);
-
+                    try
+                    {
+                        string[] st = t.Direccion.Split(Const.PIPE);
+                        GeolocationDto geolocationDto =
+                            GetGeolocation(
+                                    codDep,
+                                    codMun,
+                                    st[0],
+                                    t.Zona
+                                );
+                        t.GeoRefY = geolocationDto.Latitude;
+                        t.GeoRefX = geolocationDto.Longitude;
+                        updateCoordinatesEnvioService.UpdateTblEvento(t);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e.Message);
+                    }
                 }
             }
         }
-        public async Task UpdateCoordinatesPreOrden()
+
+        public void UpdateCoordinatesPreOrden()
         {
             IEnumerable<AuxGisRoutesDto> list =
-                await updatePreOrderRepository.GetListAuxiliarGisRoutes();
+                updatePreOrderRepository.GetListAuxiliarGisRoutes();
             foreach (AuxGisRoutesDto t in list)
             {
                 if (t.Direccion != null)
                 {
-                    string[] st = t.Direccion.Split(Const.PIPE);
-                    GeolocationDto geolocationDto =
-                        await GetGeolocation(
-                                t.CodDepartamento,
-                                t.CodMunicipio,
-                                st[0],
-                                t.Zona,
-                                departmentLecRepository
-                            );
-                    t.GeoRefY = geolocationDto.Latitude;
-                    t.GeoRefX = geolocationDto.Longitude;
-                    await updatePreOrderRepository.UpdateAuxiliarGisroutes(t);
+                    try
+                    {
+                        string[] st = t.Direccion.Split(Const.PIPE);
+                        GeolocationDto geolocationDto =
+                            GetGeolocation(
+                                    t.CodDepartamento,
+                                    t.CodMunicipio,
+                                    st[0],
+                                    t.Zona
+                                );
+                        t.GeoRefY = geolocationDto.Latitude;
+                        t.GeoRefX = geolocationDto.Longitude;
+                        updatePreOrderRepository.UpdateAuxiliarGisroutes(t);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e.Message);
+                    }
                 }
             }
         }
-        private async Task<GeolocationDto> GetGeolocation(
+
+        private GeolocationDto GetGeolocation(
                 byte codDep,
                 byte codMun,
                 string dir,
-                string zona,
-                DepartmentRepository context
+                string zona
             )
         {
             try
             {
-                AddressDto result = await context.GetDepAndMun
+                AddressDto result = departmentRepositoryLec.GetDepAndMun
                                 (
                                     codDep + Const.GUION + codMun,
                                     dir,
                                     zona
                                 );
-                if ( result.department != null)
-                {
-                    AddressTools addressTools = new AddressTools(
+                AddressTools addressTools = new AddressTools(
                          StringTools.FixedAddress(result));
-                    return addressTools.UpdateCoordinates();
-                }
-                return new GeolocationDto
-                {
-                    Latitude = Const.ZERO,
-                    Longitude = Const.ZERO
-                };
+                return addressTools.UpdateCoordinates();
             }
             catch (Exception)
             {
-                return new GeolocationDto
-                {
-                    Latitude = Const.ZERO,
-                    Longitude = Const.ZERO
-                };
+                throw new Exception();
             }
         }
     }

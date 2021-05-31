@@ -47,8 +47,7 @@ namespace Assets.Utilities
         public const int ONE = 1;
         public const int SEVEN = 7;
         public const int INTWEDDING = 1;
-        public const int LIMITWITHOUTZONE = 146;
-        public const int LIMITWITHZONE = 139;
+        public const int LIMIT = 200;
         public const char PIPE = '|';
         public const int SIZEDOC = 1;
     }

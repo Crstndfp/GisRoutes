@@ -7,13 +7,11 @@ using Repository.Mappers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Repository.DomCemaco
 {
     public class UpdateCoordinatesRepository
     {
-
         private readonly DomCemacoContext _context;
         private readonly ILogger _logger;
 
@@ -25,8 +23,9 @@ namespace Repository.DomCemaco
             _context = context;
             _logger = logger;
         }
-        public async Task<IEnumerable<TableShippingDirDto>> GetTblenvioDirToday() { 
-        
+
+        public IEnumerable<TableShippingDirDto> GetTblenvioDirToday()
+        {
             DateTime today = DateTime.Now;
             try
             {
@@ -37,16 +36,16 @@ namespace Repository.DomCemaco
                                 DateTime.Compare(today.AddDays(-10).Date, envio.Fecha.Date) < Const.ZERO
                                 && envioDir.GeoRefX.Equals(Const.ZERO) && envioDir.GeoRefY.Equals(Const.ZERO)
                             select envioDir;
-                return MapperListDomCemaco.MapList(await query.ToListAsync());
+                return MapperListDomCemaco.MapList(query.ToList());
             }
             catch (Exception e)
             {
                 _logger.LogError(e.Message, e.StackTrace);
                 return new List<TableShippingDirDto>();
             }
-            
         }
-        public async Task<IEnumerable<TableEventDto>> GetTblEventosToday()
+
+        public IEnumerable<TableEventDto> GetTblEventosToday()
         {
             try
             {
@@ -58,43 +57,44 @@ namespace Repository.DomCemaco
                                 DateTime.Compare(today.AddDays(-10).Date, envio.Fecha.Date) < Const.ZERO
                                 && evento.GeoRefX.Equals(Const.ZERO) && evento.GeoRefY.Equals(Const.ZERO)
                             select evento;
-                return MapperListDomCemaco.MapList(await query.ToListAsync());
+                return MapperListDomCemaco.MapList(query.ToList());
             }
             catch (Exception e)
             {
                 _logger.LogError(e.Message, e.StackTrace);
                 return new List<TableEventDto>();
             }
-            
         }
-        public async Task UpdateTblEnvioDir(TableShippingDirDto tableShippingDirDto)
+
+        public void UpdateTblEnvioDir(TableShippingDirDto tableShippingDirDto)
         {
             try
             {
-                TblEnvioDir tblEnvioDir = await _context.TblEnvioDir
+                TblEnvioDir tblEnvioDir = _context.TblEnvioDir
                     .Where(ed => ed.IdEnvio == tableShippingDirDto.IdEnvio)
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefault();
                 tblEnvioDir.GeoRefY = tableShippingDirDto.GeoRefY;
                 tblEnvioDir.GeoRefX = tableShippingDirDto.GeoRefX;
                 _context.TblEnvioDir.Update(tblEnvioDir);
-                await _context.SaveChangesAsync();
+                _context.SaveChanges();
             }
             catch (DbUpdateException e)
             {
                 _logger.LogError(e.Message, e.StackTrace);
             }
         }
-        public async Task UpdateTblEvento(TableEventDto tableEventDto)
+
+        public void UpdateTblEvento(TableEventDto tableEventDto)
         {
             try
             {
-                TblEvento tblEvento = await _context.TblEvento
+                TblEvento tblEvento = _context.TblEvento
                     .Where(ev => ev.IdEvento == tableEventDto.IdEvento)
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefault();
                 tblEvento.GeoRefX = tableEventDto.GeoRefX;
                 tblEvento.GeoRefY = tableEventDto.GeoRefY;
                 _context.TblEvento.Update(tblEvento);
-                await _context.SaveChangesAsync();
+                _context.SaveChanges();
             }
             catch (DbUpdateException e)
             {

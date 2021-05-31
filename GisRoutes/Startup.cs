@@ -84,7 +84,7 @@ namespace GisRoutes
             services.AddScoped<UpdateCoordinatesRepository, UpdateCoordinatesRepository>();
             services.AddScoped<UpdatePreOrderRepository, UpdatePreOrderRepository>();
             services.AddScoped<TransportRepository, TransportRepository>();
-
+            services.AddScoped<DepartmentRepositoryLec, DepartmentRepositoryLec>();
 
             // Register the Swagger generator, defining 1 or more Swagger documents
             services.AddSwaggerGen(c =>

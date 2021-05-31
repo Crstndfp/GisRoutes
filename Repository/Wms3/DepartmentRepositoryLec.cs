@@ -1,23 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Models.ModelsDomCemaco;
-using Assets.Dto;
-using Microsoft.Extensions.Logging;
+﻿using Assets.Dto;
 using Assets.Utilities;
+using Microsoft.Extensions.Logging;
+using Models.ModelsWms3;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
-namespace Repository.DomCemaco
+namespace Repository.Wms3
 {
-    public class DepartmentRepository
+    public class DepartmentRepositoryLec
     {
-        private readonly DomCemacoContext _context;
+        private readonly WMS3Context _context;
         private readonly ILogger _logger;
-        public DepartmentRepository(
-            DomCemacoContext context,
-            ILogger<DepartmentRepository> logger
-            )
+
+        public DepartmentRepositoryLec(
+          WMS3Context context,
+          ILogger<DepartmentRepositoryLec> logger
+          )
         {
             _context = context;
             _logger = logger;
@@ -34,6 +35,7 @@ namespace Repository.DomCemaco
                             where departamento.CodDepartamento == codDepartment
                                 && municipio.CodMunicipio == codMunicipality
                             select municipio.Nombre + Const.SPACE + departamento.Nombre;
+
 
                 return await query.FirstAsync();
             }
@@ -74,5 +76,6 @@ namespace Repository.DomCemaco
             }
 
         }
+
     }
 }

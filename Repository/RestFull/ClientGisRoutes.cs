@@ -17,9 +17,8 @@ namespace Repository.RestFull
             try
             {
                 var client = new RestClient(
-                "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&singleLine="
-                + address
-                + "&location=%7B%22x%22%3A-10075930.263089431%2C%22y%22%3A1647271.998164099%2C%22spatialReference%22%3A%7B%22wkid%22%3A102100%2C%22latestWkid%22%3A3857%7D%7D&maxLocations=2")
+                "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&maxLocations=2&SingleLine="
+                + address)
                 {
                     Timeout = -1
                 };
